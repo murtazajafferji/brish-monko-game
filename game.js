@@ -120,8 +120,8 @@ function makePlayer() {
   return {
     x: W() * 0.25,
     y: H() * 0.68,
-    w: 78,
-    h: 104,
+    w: 82,
+    h: 110,
     vy: 0,
     onGround: true,
     holdJump: false,
@@ -195,10 +195,10 @@ function spawnEnemy() {
       y: gy,
       w: 42,
       h: 42,
-      hp: 18 + Math.floor(state.distance / 700),
-      maxHp: 18 + Math.floor(state.distance / 700),
+      hp: 20 + Math.floor(state.distance / 500),
+      maxHp: 20 + Math.floor(state.distance / 500),
       color: world.decor2,
-      speed: rand(1.2, 2.5),
+      speed: rand(1.5, 2.8) + state.distance * 0.0003,
       hurt: 0,
       dead: false,
       attackCd: 0
@@ -210,10 +210,10 @@ function spawnEnemy() {
       y: gy - rand(70, 130),
       w: 38,
       h: 38,
-      hp: 12 + Math.floor(state.distance / 900),
-      maxHp: 12 + Math.floor(state.distance / 900),
+      hp: 14 + Math.floor(state.distance / 600),
+      maxHp: 14 + Math.floor(state.distance / 600),
       color: '#ef4444',
-      speed: rand(1.8, 2.8),
+      speed: rand(2.0, 3.2) + state.distance * 0.0004,
       hurt: 0,
       dead: false,
       attackCd: 0,
@@ -226,12 +226,33 @@ function spawnObstacle() {
   const world = WORLDS[state.worldIndex];
   const gx = state.distance + W() + rand(220, 420);
   const choice = Math.random();
-  if (choice < 0.5) {
-    state.obstacles.push({ type: 'block', x: gx, y: groundY() - 40, w: rand(40, 80), h: rand(40, 95), color: world.decor1 });
-  } else if (choice < 0.8) {
-    state.obstacles.push({ type: 'gap', x: gx, y: groundY(), w: rand(70, 130), h: 40 });
+  const diff = Math.min(1, state.distance / 8000); // difficulty 0-1
+  if (choice < 0.3) {
+    // single block
+    state.obstacles.push({ type: 'block', x: gx, y: groundY() - 40, w: rand(40, 70 + diff * 30), h: rand(40, 80 + diff * 30), color: world.decor1 });
+  } else if (choice < 0.45) {
+    // gap
+    state.obstacles.push({ type: 'gap', x: gx, y: groundY(), w: rand(70, 110 + diff * 40), h: 40 });
+  } else if (choice < 0.6) {
+    // tall wall
+    state.obstacles.push({ type: 'high', x: gx, y: groundY() - 120, w: rand(36, 50), h: rand(80, 130), color: world.decor2 });
+  } else if (choice < 0.75) {
+    // double block staircase
+    state.obstacles.push({ type: 'block', x: gx, y: groundY() - 40, w: 55, h: 50, color: world.decor1 });
+    state.obstacles.push({ type: 'block', x: gx + 60, y: groundY() - 40, w: 55, h: 90, color: world.decor2 });
+  } else if (choice < 0.88) {
+    // low + high combo (must jump and time)
+    state.obstacles.push({ type: 'block', x: gx, y: groundY() - 40, w: 70, h: 50, color: world.decor1 });
+    state.obstacles.push({ type: 'high', x: gx + 130, y: groundY() - 130, w: 45, h: 100, color: world.decor2 });
   } else {
-    state.obstacles.push({ type: 'high', x: gx, y: groundY() - 120, w: rand(36, 56), h: rand(80, 120), color: world.decor2 });
+    // triple gap with platforms
+    state.obstacles.push({ type: 'gap', x: gx, y: groundY(), w: 80, h: 40 });
+    state.obstacles.push({ type: 'block', x: gx + 80, y: groundY() - 40, w: 50, h: 50, color: world.decor1 });
+    state.obstacles.push({ type: 'gap', x: gx + 130, y: groundY(), w: 80, h: 40 });
+  }
+  // Sometimes spawn an enemy near the obstacle
+  if (diff > 0.3 && Math.random() < 0.35) {
+    spawnEnemy();
   }
 }
 
@@ -333,17 +354,17 @@ function updatePlaying() {
   const gy = groundY();
 
   state.distance += state.speed;
-  state.speed += 0.0015;
-  state.worldIndex = Math.min(2, Math.floor(state.distance / 2400));
+  state.speed += 0.0008;
+  state.worldIndex = Math.min(2, Math.floor(state.distance / 6000));
 
   // Jump physics
   if (p.onGround && state.justPressed) {
-    p.vy = -11.5;
+    p.vy = -13;
     p.onGround = false;
   }
   if (!p.onGround) {
     const holding = state.pointerDown && !state.swipeTriggered;
-    const gravity = holding && p.vy < 0 ? 0.38 : 0.62;
+    const gravity = holding && p.vy < 0 ? 0.32 : 0.58;
     p.vy += gravity;
     p.y += p.vy;
     if (p.y >= gy) {
@@ -378,11 +399,11 @@ function updatePlaying() {
   state.obstacleTimer--;
   if (state.enemyTimer <= 0) {
     spawnEnemy();
-    state.enemyTimer = Math.floor(rand(55, 95) - Math.min(25, state.distance / 450));
+    state.enemyTimer = Math.floor(rand(45, 80) - Math.min(30, state.distance / 350));
   }
   if (state.obstacleTimer <= 0) {
     spawnObstacle();
-    state.obstacleTimer = Math.floor(rand(75, 130) - Math.min(35, state.distance / 500));
+    state.obstacleTimer = Math.floor(rand(60, 100) - Math.min(40, state.distance / 400));
   }
 
   // Enemies
