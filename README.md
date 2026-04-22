@@ -1,34 +1,19 @@
-# Brish & Marko Adventure
+# Brish & Monko Adventure
 
-A small browser game made from the original drawings.
+A mobile-friendly browser platformer made from original hand-drawn artwork.
 
 ## Heroes
-- **Brish** — punch really hard
-  - `J` = Mega Punch
-  - `K` = Ground Smash
-- **Marko** — sharp shoes + magic power
-  - `J` = Sharp Shoe Dash
-  - `K` = Magic Flower projectile
+- **Brish** — punch really hard (J = Mega Punch, K = Ground Smash)
+- **Monko** — sharp shoes + magic power (J = Sharp Shoe Dash, K = Magic Flower)
 
 ## Levels
-- **Lego Land**
-- **Beach World**
-- **Mini World**
+- 🧱 Lego Land
+- 🏖️ Beach World
+- 🔬 Mini World
 
-## Run it
-From this folder:
-
-```bash
-python3 -m http.server 8000
-```
-
-Then open:
-
-<http://localhost:8000>
+## Play
+https://murtazajafferji.github.io/brish-monko-game/
 
 ## Controls
-- Move: Arrow keys or `A` / `D`
-- Jump: `W`, `Up`, or `Space`
-- Power 1: `J`
-- Power 2: `K`
-- Restart: `R`
+**Mobile:** On-screen D-pad + action buttons
+**Desktop:** Arrow keys / WASD, J/K for powers, E for car, R to restart, Esc to pause

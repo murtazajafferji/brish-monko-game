@@ -1,73 +1,76 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Brish & Marko Adventure</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<title>Brish & Monko Adventure</title>
+<link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <div class="app">
-    <aside class="sidebar">
-      <h1>Brish & Marko Adventure</h1>
-      <p class="subtitle">Made from the original drawings</p>
-
-      <section class="panel">
-        <h2>Choose Hero</h2>
-        <div class="hero-picker">
-          <button class="hero-card selected" data-hero="brish" id="pick-brish">
-            <img src="sprites/brish.png" alt="Brish" />
-            <span><strong>Brish</strong><br/>Punch really hard</span>
-          </button>
-          <button class="hero-card" data-hero="marko" id="pick-marko">
-            <img src="sprites/marko.png" alt="Marko" />
-            <span><strong>Marko</strong><br/>Sharp shoes + magic power</span>
-          </button>
-        </div>
-      </section>
-
-      <section class="panel">
-        <h2>Levels</h2>
-        <div class="level-picker">
-          <button class="level-btn selected" data-level="0">Lego Land</button>
-          <button class="level-btn" data-level="1">Beach World</button>
-          <button class="level-btn" data-level="2">Mini World</button>
-        </div>
-      </section>
-
-      <section class="panel controls">
-        <h2>Controls</h2>
-        <ul>
-          <li><strong>Move:</strong> Arrow keys or A / D</li>
-          <li><strong>Jump:</strong> W, Up, or Space</li>
-          <li><strong>Power 1:</strong> J</li>
-          <li><strong>Power 2:</strong> K</li>
-          <li><strong>Enter/Exit Car:</strong> E</li>
-          <li><strong>Restart level:</strong> R</li>
-        </ul>
-      </section>
-
-      <section class="panel story">
-        <h2>Worlds</h2>
-        <ul>
-          <li><strong>Lego Land</strong> – blocky brick towers and hopping enemies</li>
-          <li><strong>Beach World</strong> – waves, sand bars, shells, and a deep pit</li>
-          <li><strong>Mini World</strong> – tiny people, a scribble sky, and lots of surprises</li>
-        </ul>
-      </section>
-
-      <div class="statusbar">
-        <div id="hero-name">Hero: Brish</div>
-        <div id="level-name">Level: Lego Land</div>
-        <div id="message">Use J/K to use powers</div>
-      </div>
-    </aside>
-
-    <main class="game-wrap">
-      <canvas id="game" width="1000" height="600"></canvas>
-    </main>
+<!-- Title screen -->
+<div id="title-screen" class="screen active">
+  <h1>Brish &amp; Monko</h1>
+  <p class="sub">Adventure</p>
+  <div class="hero-select">
+    <button class="hero-btn selected" data-hero="brish">
+      <img src="sprites/brish-idle.png" alt="Brish"/>
+      <span>Brish</span>
+      <small>Punch really hard</small>
+    </button>
+    <button class="hero-btn" data-hero="monko">
+      <img src="sprites/monko.png" alt="Monko"/>
+      <span>Monko</span>
+      <small>Sharp shoes &amp; magic</small>
+    </button>
   </div>
+  <div class="level-select">
+    <button class="lvl-btn selected" data-level="0">🧱 Lego Land</button>
+    <button class="lvl-btn" data-level="1">🏖️ Beach World</button>
+    <button class="lvl-btn" data-level="2">🔬 Mini World</button>
+  </div>
+  <button id="play-btn" class="big-btn">▶ PLAY</button>
+</div>
 
-  <script src="game.js"></script>
+<!-- Game screen -->
+<div id="game-screen" class="screen">
+  <canvas id="game"></canvas>
+  <div id="hud">
+    <div id="hud-level"></div>
+    <div id="hud-enemies"></div>
+    <button id="hud-pause">⏸</button>
+  </div>
+  <div id="touch-controls">
+    <div class="touch-left">
+      <button id="btn-left" class="dpad">◀</button>
+      <button id="btn-right" class="dpad">▶</button>
+    </div>
+    <div class="touch-right">
+      <button id="btn-jump" class="action">⬆</button>
+      <button id="btn-pow1" class="action pow">J</button>
+      <button id="btn-pow2" class="action pow">K</button>
+      <button id="btn-car" class="action car">🚗</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pause overlay -->
+<div id="pause-overlay" class="overlay hidden">
+  <h2>Paused</h2>
+  <button id="resume-btn" class="big-btn">▶ Resume</button>
+  <button id="restart-btn" class="big-btn">🔄 Restart</button>
+  <button id="menu-btn" class="big-btn">🏠 Menu</button>
+</div>
+
+<!-- Win overlay -->
+<div id="win-overlay" class="overlay hidden">
+  <h2 id="win-text">Level Complete! 🎉</h2>
+  <button id="next-btn" class="big-btn">Next Level ▶</button>
+  <button id="replay-btn" class="big-btn">🔄 Replay</button>
+  <button id="win-menu-btn" class="big-btn">🏠 Menu</button>
+</div>
+
+<script src="game.js"></script>
 </body>
 </html>
