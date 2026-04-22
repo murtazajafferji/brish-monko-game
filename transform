@@ -1,0 +1,25 @@
+from PIL import Image, ImageOps, ImageChops
+import numpy as np
+import os
+# Load sprite sheets
+brish_path = 'sprites/brish-spritesheet.jpg'
+monko_path = 'sprites/monko-spritesheet.jpg'
+
+brish_spritesheet = Image.open(brish_path).convert("RGBA")
+monko_spritesheet = Image.open(monko_path).convert("RGBA")
+
+def find_character_bounding_boxes(spritesheet):
+    # Convert to numpy array for pixel-level operations
+    data = np.array(spritesheet)
+    height, width, _ = data.shape
+    bounding_boxes = []
+
+    for i in range(2): # for the two rows
+        for j in range(4): # for 4 columns
+            x_start = j * (width // 4)
+            y_start = i * (height // 2)
+            x_end = x_start + (width // 4)
+            y_end = y_start + (height // 2)
+
+            clear_frame_mask = np.any(mask > threshold)
+ 
