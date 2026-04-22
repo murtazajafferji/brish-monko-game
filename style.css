@@ -1,0 +1,113 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f4ead8;
+  color: #2d241d;
+}
+.app {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  min-height: 100vh;
+}
+.sidebar {
+  padding: 18px;
+  background: linear-gradient(180deg, #fff8ef 0%, #f2e1c7 100%);
+  border-right: 4px solid #b68d5e;
+  overflow: auto;
+}
+h1 {
+  margin: 0 0 6px;
+  font-size: 30px;
+}
+.subtitle {
+  margin-top: 0;
+  color: #7a5f41;
+}
+.panel {
+  background: rgba(255,255,255,0.65);
+  border: 2px solid #b68d5e;
+  border-radius: 14px;
+  padding: 12px;
+  margin: 14px 0;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.08);
+}
+.hero-picker {
+  display: grid;
+  gap: 10px;
+}
+.hero-card {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  padding: 8px;
+  border-radius: 12px;
+  border: 2px solid #c9b08d;
+  background: #fffdf8;
+  cursor: pointer;
+}
+.hero-card img {
+  width: 72px;
+  height: 100px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 8px;
+}
+.hero-card.selected,
+.level-btn.selected {
+  border-color: #7c4dff;
+  box-shadow: 0 0 0 3px rgba(124,77,255,0.15);
+}
+.level-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.level-btn {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 2px solid #c9b08d;
+  background: #fffdf8;
+  cursor: pointer;
+  text-align: left;
+  font-weight: 700;
+}
+.controls ul, .story ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.statusbar {
+  margin-top: 18px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #2f241d;
+  color: #fff7e8;
+  line-height: 1.7;
+}
+.game-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: #c9e5f8;
+}
+canvas {
+  max-width: 100%;
+  height: auto;
+  border: 5px solid #6d4c41;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 14px 40px rgba(0,0,0,0.22);
+}
+@media (max-width: 900px) {
+  .app {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    border-right: none;
+    border-bottom: 4px solid #b68d5e;
+  }
+}

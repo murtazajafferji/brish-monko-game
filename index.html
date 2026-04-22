@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brish & Marko Adventure</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <h1>Brish & Marko Adventure</h1>
+      <p class="subtitle">Made from the original drawings</p>
+
+      <section class="panel">
+        <h2>Choose Hero</h2>
+        <div class="hero-picker">
+          <button class="hero-card selected" data-hero="brish" id="pick-brish">
+            <img src="sprites/brish.png" alt="Brish" />
+            <span><strong>Brish</strong><br/>Punch really hard</span>
+          </button>
+          <button class="hero-card" data-hero="marko" id="pick-marko">
+            <img src="sprites/marko.png" alt="Marko" />
+            <span><strong>Marko</strong><br/>Sharp shoes + magic power</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Levels</h2>
+        <div class="level-picker">
+          <button class="level-btn selected" data-level="0">Lego Land</button>
+          <button class="level-btn" data-level="1">Beach World</button>
+          <button class="level-btn" data-level="2">Mini World</button>
+        </div>
+      </section>
+
+      <section class="panel controls">
+        <h2>Controls</h2>
+        <ul>
+          <li><strong>Move:</strong> Arrow keys or A / D</li>
+          <li><strong>Jump:</strong> W, Up, or Space</li>
+          <li><strong>Power 1:</strong> J</li>
+          <li><strong>Power 2:</strong> K</li>
+          <li><strong>Enter/Exit Car:</strong> E</li>
+          <li><strong>Restart level:</strong> R</li>
+        </ul>
+      </section>
+
+      <section class="panel story">
+        <h2>Worlds</h2>
+        <ul>
+          <li><strong>Lego Land</strong> – blocky brick towers and hopping enemies</li>
+          <li><strong>Beach World</strong> – waves, sand bars, shells, and a deep pit</li>
+          <li><strong>Mini World</strong> – tiny people, a scribble sky, and lots of surprises</li>
+        </ul>
+      </section>
+
+      <div class="statusbar">
+        <div id="hero-name">Hero: Brish</div>
+        <div id="level-name">Level: Lego Land</div>
+        <div id="message">Use J/K to use powers</div>
+      </div>
+    </aside>
+
+    <main class="game-wrap">
+      <canvas id="game" width="1000" height="600"></canvas>
+    </main>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
