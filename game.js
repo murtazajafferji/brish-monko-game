@@ -10,8 +10,24 @@ const spritePaths = {
   marko: 'sprites/marko.png',
   brishCar: 'sprites/brish-car.png',
   markoCar: 'sprites/marko-car.png',
-  levelSheet: 'sprites/levels-sheet.jpg'
+  levelSheet: 'sprites/levels-sheet.jpg',
+  brishStrip: 'sprites/brish-strip.png'
 };
+
+// Animation config: frame indices into the strip (8 frames, 320px each)
+const BRISH_ANIMS = {
+  idle: [0],
+  walk: [1, 2, 3, 2],
+  jump: [4],
+  fall: [5],
+  punch1: [6, 7],  // mega punch
+  punch2: [6]       // ground smash windup
+};
+const BRISH_FRAME_W = 320;
+const BRISH_FRAME_H = 426;
+let brishAnimFrame = 0;
+let brishAnimTimer = 0;
+let brishAnimState = 'idle';
 
 const images = {};
 let loaded = 0;
@@ -561,9 +577,34 @@ function drawCar() {
   }
 }
 
+function updateBrishAnim() {
+  // Determine animation state
+  let newState = 'idle';
+  if (player.attackFlash > 0) {
+    newState = player.cooldown1 < 20 ? 'punch1' : 'punch2';
+  } else if (!player.onGround && player.vy < 0) {
+    newState = 'jump';
+  } else if (!player.onGround && player.vy > 0) {
+    newState = 'fall';
+  } else if (Math.abs(player.vx) > 0.5) {
+    newState = 'walk';
+  }
+  if (newState !== brishAnimState) {
+    brishAnimState = newState;
+    brishAnimFrame = 0;
+    brishAnimTimer = 0;
+  }
+  brishAnimTimer++;
+  const anim = BRISH_ANIMS[brishAnimState] || [0];
+  const speed = brishAnimState === 'walk' ? 8 : brishAnimState === 'punch1' ? 5 : 12;
+  if (brishAnimTimer >= speed) {
+    brishAnimTimer = 0;
+    brishAnimFrame = (brishAnimFrame + 1) % anim.length;
+  }
+}
+
 function drawPlayer() {
-  if (inCar) return; // hidden in car
-  const img = currentHero === 'brish' ? images.brish : images.marko;
+  if (inCar) return;
   const x = player.x - cameraX;
 
   if (player.attackFlash > 0) {
@@ -573,15 +614,38 @@ function drawPlayer() {
     ctx.fill();
   }
 
-  ctx.save();
-  if (player.facing < 0) {
-    ctx.translate(x + player.w / 2, 0);
-    ctx.scale(-1, 1);
-    ctx.drawImage(img, -player.w / 2, player.y, player.w, player.h);
+  // Use animated strip for Brish if loaded
+  if (currentHero === 'brish' && images.brishStrip && images.brishStrip.complete && images.brishStrip.naturalWidth > 0) {
+    updateBrishAnim();
+    const anim = BRISH_ANIMS[brishAnimState] || [0];
+    const frameIdx = anim[brishAnimFrame % anim.length];
+    const sx = frameIdx * BRISH_FRAME_W;
+    const sy = 0;
+    const drawW = player.w;
+    const drawH = player.h;
+
+    ctx.save();
+    if (player.facing < 0) {
+      ctx.translate(x + drawW / 2, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(images.brishStrip, sx, sy, BRISH_FRAME_W, BRISH_FRAME_H, -drawW / 2, player.y, drawW, drawH);
+    } else {
+      ctx.drawImage(images.brishStrip, sx, sy, BRISH_FRAME_W, BRISH_FRAME_H, x, player.y, drawW, drawH);
+    }
+    ctx.restore();
   } else {
-    ctx.drawImage(img, x, player.y, player.w, player.h);
+    // Fallback: static sprite
+    const img = currentHero === 'brish' ? images.brish : images.marko;
+    ctx.save();
+    if (player.facing < 0) {
+      ctx.translate(x + player.w / 2, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(img, -player.w / 2, player.y, player.w, player.h);
+    } else {
+      ctx.drawImage(img, x, player.y, player.w, player.h);
+    }
+    ctx.restore();
   }
-  ctx.restore();
 }
 
 function drawProjectiles() {
