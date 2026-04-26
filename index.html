@@ -1,33 +1,463 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="mobile-web-app-capable" content="yes"/>
-<meta name="theme-color" content="#000"/>
-<title>Brish & Monko: Smash & Bloom</title>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet"/>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:#000;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;font-family:'Fredoka',system-ui,sans-serif}
-#canvas1{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);max-width:100%;max-height:100%}
-#playerImage,#playerImage2,#enemyImage,#backgroundImage{display:none}
-.hero-switch{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:10}
-.hero-switch button{padding:8px 18px;border-radius:10px;border:2px solid rgba(255,255,255,.3);background:rgba(0,0,0,.5);color:#fff;font-family:'Fredoka',sans-serif;font-size:15px;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.hero-switch button.active{border-color:#7c4dff;background:rgba(124,77,255,.3)}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#1d102b" />
+  <title>Brish & Monko: Kickball Clash</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #120a1b;
+      --panel: rgba(15, 10, 28, 0.82);
+      --panel-strong: rgba(23, 14, 40, 0.94);
+      --line: rgba(255,255,255,0.14);
+      --text: #fff7f0;
+      --muted: rgba(255,247,240,0.74);
+      --gold: #ffd44d;
+      --brish: #ff8c42;
+      --monko: #7cbbff;
+      --good: #7cf5aa;
+      --danger: #ff7c9f;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: radial-gradient(circle at top, #2a1643 0%, var(--bg) 58%, #08040d 100%);
+      font-family: 'Fredoka', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text);
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #app {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .hud {
+      position: absolute;
+      inset: env(safe-area-inset-top, 0px) 0 auto 0;
+      padding: 14px 16px 0;
+      pointer-events: none;
+    }
+
+    .scorebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 10px 14px;
+      background: linear-gradient(180deg, rgba(38,23,62,0.92), rgba(17,11,31,0.84));
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 16px 50px rgba(0,0,0,0.28);
+      backdrop-filter: blur(14px);
+    }
+
+    .team {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .team.right { flex-direction: row-reverse; }
+
+    .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      font-size: 1.4rem;
+      font-weight: 700;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18);
+    }
+
+    .avatar.brish { background: linear-gradient(180deg, #ffac6b, #ff7a18); }
+    .avatar.monko { background: linear-gradient(180deg, #a9d4ff, #548fff); }
+
+    .meta { min-width: 0; }
+    .meta .label {
+      font-size: 0.76rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .meta .name {
+      font-size: 1.05rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .score-center {
+      text-align: center;
+      min-width: 170px;
+    }
+    .score-center .world {
+      font-size: 0.82rem;
+      color: var(--gold);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .score-center .score {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 700;
+      line-height: 1;
+      margin-top: 4px;
+    }
+    .score-center .sub {
+      margin-top: 4px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(7, 4, 14, 0.38);
+      transition: opacity 220ms ease, visibility 220ms ease;
+    }
+
+    .overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .card {
+      width: min(760px, 100%);
+      background: linear-gradient(180deg, rgba(31,20,51,0.96), rgba(17,11,31,0.96));
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 26px;
+      padding: 24px;
+      box-shadow: 0 30px 90px rgba(0,0,0,0.44);
+      backdrop-filter: blur(14px);
+    }
+
+    .kicker {
+      color: var(--gold);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 0.78rem;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(2rem, 6vw, 3.8rem);
+      line-height: 0.96;
+    }
+
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(0.98rem, 2.6vw, 1.08rem);
+      line-height: 1.45;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .hero-btn {
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      border-radius: 22px;
+      padding: 16px;
+      text-align: left;
+      cursor: pointer;
+      transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
+    }
+
+    .hero-btn:active { transform: scale(0.98); }
+    .hero-btn.selected.brish {
+      background: rgba(255, 140, 66, 0.14);
+      border-color: rgba(255, 176, 114, 0.66);
+      box-shadow: 0 14px 30px rgba(255, 140, 66, 0.16);
+    }
+    .hero-btn.selected.monko {
+      background: rgba(124, 187, 255, 0.14);
+      border-color: rgba(157, 206, 255, 0.66);
+      box-shadow: 0 14px 30px rgba(124, 187, 255, 0.16);
+    }
+
+    .hero-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .hero-title span.emoji { font-size: 1.25rem; }
+    .hero-copy {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+
+    .fact-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .fact {
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .fact strong { display: block; margin-bottom: 4px; font-size: 1rem; }
+    .fact span { color: var(--muted); font-size: 0.92rem; line-height: 1.35; }
+
+    .actions {
+      margin-top: 18px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .primary,
+    .secondary,
+    .touch-btn {
+      border: 0;
+      border-radius: 999px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--text);
+      transition: transform 120ms ease, filter 120ms ease, background 120ms ease;
+    }
+
+    .primary:active,
+    .secondary:active,
+    .touch-btn:active { transform: scale(0.97); }
+
+    .primary {
+      padding: 14px 22px;
+      background: linear-gradient(180deg, #ffd85e, #ffba2c);
+      color: #2b1900;
+      box-shadow: 0 14px 24px rgba(255, 197, 72, 0.28);
+    }
+
+    .secondary {
+      padding: 14px 18px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .touch-controls {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+      padding: 0 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 12px;
+      pointer-events: none;
+    }
+
+    .cluster {
+      display: flex;
+      gap: 10px;
+      pointer-events: auto;
+    }
+
+    .cluster.right { align-items: flex-end; }
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .touch-btn {
+      width: 68px;
+      height: 68px;
+      background: rgba(22, 15, 37, 0.72);
+      border: 1px solid rgba(255,255,255,0.14);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 10px 26px rgba(0,0,0,0.24);
+      font-size: 1.5rem;
+      pointer-events: auto;
+    }
+
+    .touch-btn.wide {
+      width: 86px;
+      font-size: 1.15rem;
+      padding: 0 10px;
+    }
+
+    .touch-btn.active {
+      filter: brightness(1.18);
+      border-color: rgba(255,255,255,0.3);
+    }
+
+    .tip {
+      position: absolute;
+      left: 50%;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 98px);
+      transform: translateX(-50%);
+      padding: 9px 14px;
+      background: rgba(16, 10, 28, 0.78);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      pointer-events: none;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+    }
+
+    @media (pointer: fine) {
+      .touch-controls { opacity: 0; pointer-events: none; }
+      .tip { bottom: 18px; }
+    }
+
+    @media (max-width: 780px) {
+      .card { padding: 18px; border-radius: 22px; }
+      .hero-grid, .fact-row { grid-template-columns: 1fr; }
+      .scorebar {
+        padding: 10px 10px;
+        gap: 10px;
+      }
+      .meta .label { font-size: 0.66rem; }
+      .meta .name { font-size: 0.94rem; }
+      .avatar { width: 40px; height: 40px; border-radius: 12px; }
+      .touch-btn { width: 58px; height: 58px; font-size: 1.3rem; }
+      .touch-btn.wide { width: 78px; font-size: 1rem; }
+      .tip {
+        width: calc(100% - 28px);
+        border-radius: 16px;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 84px);
+      }
+    }
+  </style>
 </head>
 <body>
-<canvas id="canvas1"></canvas>
-<img id="playerImage" src="images/brish_player.png"/>
-<img id="playerImage2" src="images/monko_player.png"/>
-<img id="enemyImage" src="images/enemy_1.png"/>
-<img id="backgroundImage" src="images/background_single.png"/>
-<div class="hero-switch">
-  <button class="active" onclick="switchHero('brish',this)">🥊 Brish</button>
-  <button onclick="switchHero('monko',this)">🌸 Monko</button>
-</div>
-<script src="script.js"></script>
+  <div id="app">
+    <canvas id="gameCanvas" aria-label="Brish and Monko kickball game"></canvas>
+
+    <div class="hud">
+      <div class="scorebar">
+        <div class="team" id="leftTeamMeta">
+          <div class="avatar brish" id="leftAvatar">👑</div>
+          <div class="meta">
+            <div class="label">You</div>
+            <div class="name" id="leftName">Brish</div>
+          </div>
+        </div>
+
+        <div class="score-center">
+          <div class="world" id="worldName">Lego Land</div>
+          <div class="score"><span id="leftScore">0</span> — <span id="rightScore">0</span></div>
+          <div class="sub" id="statusLine">First to 5 bells wins</div>
+        </div>
+
+        <div class="team right" id="rightTeamMeta">
+          <div class="avatar monko" id="rightAvatar">🌸</div>
+          <div class="meta">
+            <div class="label">AI rival</div>
+            <div class="name" id="rightName">Monko</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="menuOverlay">
+      <div class="card">
+        <div class="kicker">KungFu Kickball energy</div>
+        <h1>Brish &amp; Monko<br />Kickball Clash</h1>
+        <p class="lead">
+          A fast, side-view duel: launch the ball into your rival's hanging bell before they ring yours.
+          Punch, jump, body-check, and unleash a hero power. It’s short, juicy, and built for phone thumbs.
+        </p>
+
+        <div class="hero-grid">
+          <button class="hero-btn selected brish" data-hero="brish">
+            <div class="hero-title"><span class="emoji">👑</span> Brish</div>
+            <div class="hero-copy">Heavy close-range hits. His Crown Cannon sends the ball flying like a rocket.</div>
+          </button>
+          <button class="hero-btn monko" data-hero="monko">
+            <div class="hero-title"><span class="emoji">🌸</span> Monko</div>
+            <div class="hero-copy">Sharper movement and trick shots. Bloom Burst curves the ball upward and forward.</div>
+          </button>
+        </div>
+
+        <div class="fact-row">
+          <div class="fact">
+            <strong>Kickball loop</strong>
+            <span>Score by smashing the ball into the opponent's bell. Every point flips the arena to a new world.</span>
+          </div>
+          <div class="fact">
+            <strong>Simple controls</strong>
+            <span>Move, jump, strike, power. Desktop also supports A/D + W + J + K or arrow keys.</span>
+          </div>
+          <div class="fact">
+            <strong>Three worlds</strong>
+            <span>Lego Land, Beach World, and Mini World each change the vibe, colors, and crowd props.</span>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="playBtn">Start match</button>
+          <button class="secondary" id="howBtn">How to play</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip" id="tipLine">Move • Jump • Strike • Power. Hit the bell, not just the wall.</div>
+
+    <div class="touch-controls" aria-hidden="true">
+      <div class="cluster left">
+        <button class="touch-btn" data-action="left">◀</button>
+        <button class="touch-btn" data-action="right">▶</button>
+      </div>
+      <div class="cluster right">
+        <div class="stack">
+          <button class="touch-btn wide" data-action="power">Power</button>
+          <button class="touch-btn wide" data-action="attack">Kick</button>
+        </div>
+        <button class="touch-btn" data-action="jump">⤒</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
