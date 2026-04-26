@@ -144,6 +144,9 @@
       padding: 24px;
       background: rgba(7, 4, 14, 0.38);
       transition: opacity 220ms ease, visibility 220ms ease;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y;
     }
 
     .overlay.hidden {
@@ -160,6 +163,7 @@
       padding: 24px;
       box-shadow: 0 30px 90px rgba(0,0,0,0.44);
       backdrop-filter: blur(14px);
+      margin: auto;
     }
 
     .kicker {
@@ -290,6 +294,15 @@
       align-items: flex-end;
       gap: 12px;
       pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 180ms ease;
+    }
+
+    .touch-controls.live {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
     }
 
     .cluster {
@@ -350,8 +363,31 @@
     }
 
     @media (max-width: 780px) {
-      .card { padding: 18px; border-radius: 22px; }
+      .overlay {
+        align-items: flex-start;
+        padding: max(12px, env(safe-area-inset-top, 0px)) 12px max(12px, env(safe-area-inset-bottom, 0px));
+      }
+      .card {
+        padding: 16px;
+        border-radius: 22px;
+        max-height: none;
+      }
+      h1 { font-size: clamp(1.7rem, 8vw, 2.4rem); }
+      .lead { font-size: 0.92rem; line-height: 1.34; }
       .hero-grid, .fact-row { grid-template-columns: 1fr; }
+      .fact-row { gap: 10px; margin-top: 14px; }
+      .fact { padding: 12px; }
+      .actions {
+        position: sticky;
+        bottom: 0;
+        margin-top: 14px;
+        padding-top: 10px;
+        background: linear-gradient(180deg, rgba(17,11,31,0), rgba(17,11,31,0.92) 28%);
+      }
+      .primary, .secondary {
+        flex: 1 1 0;
+        min-height: 50px;
+      }
       .scorebar {
         padding: 10px 10px;
         gap: 10px;
@@ -401,11 +437,11 @@
 
     <div class="overlay" id="menuOverlay">
       <div class="card">
-        <div class="kicker">KungFu Kickball energy</div>
+        <div class="kicker">Arcade match intro</div>
         <h1>Brish &amp; Monko<br />Kickball Clash</h1>
         <p class="lead">
-          A fast, side-view duel: launch the ball into your rival's hanging bell before they ring yours.
-          Punch, jump, body-check, and unleash a hero power. It’s short, juicy, and built for phone thumbs.
+          Fast side-view duels. Hit the ball into the opponent's hanging bell. Jump, kick, slam, score.
+          Pick your fighter and start immediately.
         </p>
 
         <div class="hero-grid">
@@ -422,7 +458,7 @@
         <div class="fact-row">
           <div class="fact">
             <strong>Kickball loop</strong>
-            <span>Score by smashing the ball into the opponent's bell. Every point flips the arena to a new world.</span>
+            <span>Score by smashing the ball into the opponent's bell. Quick rounds, direct scoring, arcade pace.</span>
           </div>
           <div class="fact">
             <strong>Simple controls</strong>
@@ -430,7 +466,7 @@
           </div>
           <div class="fact">
             <strong>Three worlds</strong>
-            <span>Lego Land, Beach World, and Mini World each change the vibe, colors, and crowd props.</span>
+            <span>Brish hits harder. Monko moves faster. Same core arena loop, different feel.</span>
           </div>
         </div>
 

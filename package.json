@@ -1,0 +1,24 @@
+{
+  "name": "brish-monko-game",
+  "version": "1.0.0",
+  "description": "A mobile-friendly browser platformer made from original hand-drawn artwork.",
+  "main": "playwright-smoke.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/murtazajafferji/brish-monko-game.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/murtazajafferji/brish-monko-game/issues"
+  },
+  "homepage": "https://github.com/murtazajafferji/brish-monko-game#readme",
+  "dependencies": {
+    "playwright": "^1.59.1"
+  }
+}

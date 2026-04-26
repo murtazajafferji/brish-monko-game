@@ -95,6 +95,7 @@ const rightNameEl = document.getElementById('rightName');
 const leftAvatarEl = document.getElementById('leftAvatar');
 const rightAvatarEl = document.getElementById('rightAvatar');
 const touchButtons = [...document.querySelectorAll('.touch-btn')];
+const touchControls = document.querySelector('.touch-controls');
 
 const ASSETS = {};
 const FRAME_KEYS = {
@@ -592,7 +593,7 @@ const state = {
   roundTimer: 45,
   scoreLeft: 0,
   scoreRight: 0,
-  winningScore: 5,
+  winningScore: 999,
   worldIndex: 0,
   cameraShake: 0,
   flashTimer: 0,
@@ -647,7 +648,7 @@ function updateHUD() {
   rightNameEl.textContent = ai.hero.name;
   rightAvatarEl.textContent = ai.hero.emoji;
   if (state.phase === 'play') {
-    statusLineEl.textContent = `${Math.ceil(state.roundTimer)}s • ${player.hero.powerName} ready in ${Math.max(0, player.powerCooldown).toFixed(1)}s`;
+    statusLineEl.textContent = `${Math.ceil(state.roundTimer)}s left • ${player.hero.powerName} ready in ${Math.max(0, player.powerCooldown).toFixed(1)}s`;
   }
 }
 
@@ -662,6 +663,25 @@ function cycleWorld() {
   updateHUD();
 }
 
+function finishMatch() {
+  state.phase = 'gameover';
+  menuOverlay.classList.remove('hidden');
+  touchControls?.classList.remove('live');
+  let title = 'Draw game';
+  let copy = `Final score: ${state.scoreLeft} — ${state.scoreRight}.`;
+  if (state.scoreLeft > state.scoreRight) {
+    title = `${player.hero.name} wins`;
+    copy = `${player.hero.name} takes it ${state.scoreLeft} — ${state.scoreRight}.`;
+  } else if (state.scoreRight > state.scoreLeft) {
+    title = `${ai.hero.name} wins`;
+    copy = `${ai.hero.name} takes it ${state.scoreRight} — ${state.scoreLeft}.`;
+  }
+  document.querySelector('.kicker').textContent = 'Match finished';
+  document.querySelector('h1').innerHTML = `${title}<br />Kickball Clash`;
+  document.querySelector('.lead').textContent = `${copy} Tap start for a rematch or switch heroes.`;
+  playBtn.textContent = 'Play again';
+}
+
 function scorePoint(side) {
   if (side === 'left') state.scoreLeft += 1;
   else state.scoreRight += 1;
@@ -669,18 +689,7 @@ function scorePoint(side) {
   state.scoreFreeze = 1.2; // celebration slowmo
   state.cameraShake = Math.max(state.cameraShake, 18);
   flashStatus(side === 'left' ? `${player.hero.name} rang the bell!` : `${ai.hero.name} scores!`);
-  cycleWorld();
   resetPositions(true);
-
-  if (state.scoreLeft >= state.winningScore || state.scoreRight >= state.winningScore) {
-    state.phase = 'gameover';
-    menuOverlay.classList.remove('hidden');
-    const winner = state.scoreLeft > state.scoreRight ? player.hero.name : ai.hero.name;
-    document.querySelector('.kicker').textContent = 'Match finished';
-    document.querySelector('h1').innerHTML = `${winner} wins<br />the kickball duel`;
-    document.querySelector('.lead').textContent = `${state.scoreLeft} — ${state.scoreRight}. Tap start for a rematch or switch heroes.`;
-    playBtn.textContent = 'Play again';
-  }
   updateHUD();
 }
 
@@ -947,18 +956,10 @@ function update(dt) {
 
   state.roundTimer -= dt;
   if (state.roundTimer <= 0) {
-    state.roundTimer = 45;
-    if (state.scoreLeft === state.scoreRight) {
-      flashStatus('Tied at the horn. Golden point!');
-    } else if (state.scoreLeft > state.scoreRight) {
-      state.scoreLeft = state.winningScore;
-      scorePoint('left');
-      return;
-    } else {
-      state.scoreRight = state.winningScore;
-      scorePoint('right');
-      return;
-    }
+    state.roundTimer = 0;
+    finishMatch();
+    updateHUD();
+    return;
   }
 
   consumeInput();
@@ -986,6 +987,7 @@ function startMatch() {
   document.querySelector('.lead').textContent = 'A fast, side-view duel: launch the ball into your rival\'s hanging bell before they ring yours. Punch, jump, body-check, and unleash a hero power. It’s short, juicy, and built for phone thumbs.';
   playBtn.textContent = 'Start match';
   menuOverlay.classList.add('hidden');
+  touchControls?.classList.add('live');
   state.phase = 'play';
   state.roundTimer = 45;
   state.scoreLeft = 0;
@@ -995,7 +997,7 @@ function startMatch() {
   player.setHero(HEROES[state.heroSelected]);
   ai.setHero(state.heroSelected === 'brish' ? HEROES.monko : HEROES.brish);
   resetPositions(true);
-  flashStatus('First to 5 bells wins');
+  flashStatus('Timed match. Ring more bells before the clock ends.');
   tipLine.textContent = 'Left/right to move • Jump to contest • Kick for quick shots • Power for huge sends';
 }
 
@@ -1012,6 +1014,18 @@ heroButtons.forEach((btn) => {
 });
 
 playBtn.addEventListener('click', startMatch);
+playBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startMatch(); }, { passive: false });
+
+menuOverlay.addEventListener('click', (e) => {
+  if (state.phase === 'menu' && (e.target === menuOverlay || e.target.closest('.card') === null)) startMatch();
+});
+menuOverlay.addEventListener('touchstart', (e) => {
+  if (state.phase === 'menu' && (e.target === menuOverlay)) {
+    e.preventDefault();
+    startMatch();
+  }
+}, { passive: false });
+
 howBtn.addEventListener('click', () => {
   const text = 'Score by smashing the ball into the opponent bell. Kick near the ball for a fast shot. Power launches a nastier curve. On desktop: A/D or arrows move, W/Up/Space jump, J kick, K power.';
   flashStatus(text);
@@ -1021,6 +1035,7 @@ howBtn.addEventListener('click', () => {
 (async function init() {
   await loadAssets();
   resize();
+  touchControls?.classList.remove('live');
   player.setHero(HEROES[state.heroSelected]);
   ai.setHero(HEROES.monko);
   resetPositions();
