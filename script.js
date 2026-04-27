@@ -81,19 +81,17 @@ const WORLDS = [
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-const menuOverlay = document.getElementById('menuOverlay');
-const playBtn = document.getElementById('playBtn');
-const howBtn = document.getElementById('howBtn');
-const heroButtons = [...document.querySelectorAll('.hero-btn')];
-const tipLine = document.getElementById('tipLine');
-const leftScoreEl = document.getElementById('leftScore');
-const rightScoreEl = document.getElementById('rightScore');
-const worldNameEl = document.getElementById('worldName');
-const statusLineEl = document.getElementById('statusLine');
-const leftNameEl = document.getElementById('leftName');
-const rightNameEl = document.getElementById('rightName');
-const leftAvatarEl = document.getElementById('leftAvatar');
-const rightAvatarEl = document.getElementById('rightAvatar');
+// Screen elements
+const titleScreen = document.getElementById('titleScreen');
+const selectScreen = document.getElementById('selectScreen');
+const hud = document.getElementById('hud');
+const tapHint = document.getElementById('tapHint');
+const hudLeftScore = document.getElementById('hudLeftScore');
+const hudRightScore = document.getElementById('hudRightScore');
+const hudTimer = document.getElementById('hudTimer');
+const hudLeftName = document.getElementById('hudLeftName');
+const hudRightName = document.getElementById('hudRightName');
+const heroCards = [...document.querySelectorAll('.hero-card')];
 
 const ASSETS = {};
 const FRAME_KEYS = {
@@ -577,7 +575,7 @@ const state = {
   phase: 'menu',
   dt: 0,
   last: 0,
-  roundTimer: 45,
+  roundTimer: 120,
   scoreLeft: 0,
   scoreRight: 0,
   winningScore: 999,
@@ -626,23 +624,20 @@ function resetPositions(keepScore = false) {
 }
 
 function updateHUD() {
-  leftScoreEl.textContent = state.scoreLeft;
-  rightScoreEl.textContent = state.scoreRight;
-  const world = WORLDS[state.worldIndex % WORLDS.length];
-  worldNameEl.textContent = world.name;
-  leftNameEl.textContent = player.hero.name;
-  leftAvatarEl.textContent = player.hero.emoji;
-  rightNameEl.textContent = ai.hero.name;
-  rightAvatarEl.textContent = ai.hero.emoji;
+  hudLeftScore.textContent = state.scoreLeft;
+  hudRightScore.textContent = state.scoreRight;
+  hudLeftName.textContent = player.hero.name.toUpperCase();
+  hudRightName.textContent = ai.hero.name.toUpperCase();
   if (state.phase === 'play') {
-    statusLineEl.textContent = `${Math.ceil(state.roundTimer)}s left • ${player.hero.powerName} ready in ${Math.max(0, player.powerCooldown).toFixed(1)}s`;
+    const mins = Math.floor(state.roundTimer / 60);
+    const secs = Math.ceil(state.roundTimer % 60);
+    hudTimer.textContent = mins + ':' + secs.toString().padStart(2, '0');
   }
 }
 
 function flashStatus(text) {
   state.flashText = text;
   state.flashTimer = 1.2;
-  statusLineEl.textContent = text;
 }
 
 function cycleWorld() {
@@ -652,30 +647,23 @@ function cycleWorld() {
 
 function finishMatch() {
   state.phase = 'gameover';
-  menuOverlay.classList.remove('hidden');
-  
-  let title = 'Draw game';
-  let copy = `Final score: ${state.scoreLeft} — ${state.scoreRight}.`;
-  if (state.scoreLeft > state.scoreRight) {
-    title = `${player.hero.name} wins`;
-    copy = `${player.hero.name} takes it ${state.scoreLeft} — ${state.scoreRight}.`;
-  } else if (state.scoreRight > state.scoreLeft) {
-    title = `${ai.hero.name} wins`;
-    copy = `${ai.hero.name} takes it ${state.scoreRight} — ${state.scoreLeft}.`;
-  }
-  document.querySelector('.kicker').textContent = 'Match finished';
-  document.querySelector('h1').innerHTML = `${title}<br />Kickball Clash`;
-  document.querySelector('.lead').textContent = `${copy} Tap start for a rematch or switch heroes.`;
-  playBtn.textContent = 'Play again';
+  hud.style.display = 'none';
+  tapHint.style.display = 'none';
+  titleScreen.classList.remove('hidden');
+  const winner = state.scoreLeft > state.scoreRight ? player.hero.name.toUpperCase() :
+                 (state.scoreRight > state.scoreLeft ? ai.hero.name.toUpperCase() : 'DRAW');
+  titleScreen.querySelector('.title-logo').textContent = winner + ' WINS!';
+  titleScreen.querySelector('.title-sub').textContent = state.scoreLeft + ' - ' + state.scoreRight;
+  document.getElementById('titleStart').textContent = 'TAP TO REMATCH';
 }
 
 function scorePoint(side) {
   if (side === 'left') state.scoreLeft += 1;
   else state.scoreRight += 1;
   state.servingSide = side;
-  state.scoreFreeze = 1.2; // celebration slowmo
+  state.scoreFreeze = 1.2;
   state.cameraShake = Math.max(state.cameraShake, 18);
-  flashStatus(side === 'left' ? `${player.hero.name} rang the bell!` : `${ai.hero.name} scores!`);
+  flashStatus(side === 'left' ? player.hero.name + ' rang the bell!' : ai.hero.name + ' scores!');
   resetPositions(true);
   updateHUD();
 }
@@ -700,19 +688,15 @@ function checkGoal() {
 function updateAI() {
   const heroR = ai.hero.attackReach;
   const ballOnMySide = (ai.side === 'right' && ball.x > state.w / 2) || (ai.side === 'left' && ball.x < state.w / 2);
-  const ballOnEnemySide = !ballOnMySide;
   const dxBall = ball.x - ai.x;
   const dyBall = ball.y - (ai.y - 68);
   const distBall = Math.hypot(dxBall, dyBall);
   const ballAhead = (ai.facing === 1 && dxBall > 0) || (ai.facing === -1 && dxBall < 0);
 
-  // Positioning: pursue ball, bias toward own side when ball is far
   let targetX;
   if (ballOnMySide || distBall < 220) {
-    // Go to ball, slightly offset to be behind it for a good hit
     targetX = ball.x + (ai.side === 'right' ? 40 : -40);
   } else {
-    // Patrol near own bell
     const bellX = ai.side === 'right' ? state.w - 180 : 180;
     targetX = bellX + (ball.x - bellX) * 0.3;
   }
@@ -723,30 +707,24 @@ function updateAI() {
   ai.intent.attack = false;
   ai.intent.power = false;
 
-  // Jump: when ball is above, or to contest aerial ball, or to dodge opponent
   if (ball.y < ai.y - 60 && distBall < 240) ai.intent.jump = true;
-  if (ball.vy < -200 && distBall < 280) ai.intent.jump = true; // ball going up, jump to intercept
-  if (!ai.onGround && ball.y < ai.y - 40 && distBall < 180) ai.intent.jump = true; // double-contest
+  if (ball.vy < -200 && distBall < 280) ai.intent.jump = true;
+  if (!ai.onGround && ball.y < ai.y - 40 && distBall < 180) ai.intent.jump = true;
 
-  // Attack: when close enough
   if (distBall < heroR + 30 && ballAhead) {
     ai.intent.attack = Math.random() < (0.38 * ai.hero.aiAggro);
   }
-  // Even if not perfectly ahead, attack if very close
   if (distBall < heroR && Math.abs(dyBall) < 80) {
     ai.intent.attack = Math.random() < (0.5 * ai.hero.aiAggro);
   }
 
-  // Power: use strategically when ball is hittable and on good side
   if (ai.powerCooldown <= 0 && distBall < heroR + 40 && ballAhead) {
     ai.intent.power = Math.random() < (0.14 * ai.hero.aiAggro);
   }
-  // Desperation power when losing
   if (ai.powerCooldown <= 0 && state.scoreRight < state.scoreLeft && distBall < heroR + 60) {
     ai.intent.power = Math.random() < 0.2;
   }
 
-  // Defensive jump when ball heading toward own bell fast
   const ownBellX = ai.side === 'right' ? state.w - 88 : 88;
   if (Math.abs(ball.x - ownBellX) < 180 && Math.abs(ball.vx) > 300 && ((ai.side === 'right' && ball.vx > 0) || (ai.side === 'left' && ball.vx < 0))) {
     ai.intent.jump = true;
@@ -786,7 +764,7 @@ function drawBackground() {
   for (let i = 0; i < 8; i += 1) {
     const x = (i / 7) * state.w;
     const y = state.h * 0.24 + Math.sin(i * 1.9 + state.last * 0.0004) * 18;
-    ctx.font = `${28 + (i % 3) * 8}px serif`;
+    ctx.font = (28 + (i % 3) * 8) + 'px serif';
     ctx.globalAlpha = 0.26;
     ctx.fillText(world.crowd[i % world.crowd.length], x, y);
   }
@@ -904,10 +882,6 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-function drawHowTo() {
-  if (state.phase !== 'menu' || menuOverlay.classList.contains('hidden')) return;
-}
-
 function draw() {
   ctx.save();
   if (state.cameraShake > 0) {
@@ -934,10 +908,9 @@ function update(dt) {
 
   if (state.phase !== 'play') return;
 
-  // Score celebration freeze
   if (state.scoreFreeze > 0) {
     state.scoreFreeze -= dt;
-    updateParticles(dt * 0.3); // slow particles during freeze
+    updateParticles(dt * 0.3);
     return;
   }
 
@@ -968,15 +941,34 @@ function loop(ts) {
   requestAnimationFrame(loop);
 }
 
-function startMatch() {
-  document.querySelector('.kicker').textContent = 'KungFu Kickball energy';
-  document.querySelector('h1').innerHTML = 'Brish &amp; Monko<br />Kickball Clash';
-  document.querySelector('.lead').textContent = 'A fast, side-view duel: launch the ball into your rival\'s hanging bell before they ring yours. Punch, jump, body-check, and unleash a hero power. It’s short, juicy, and built for phone thumbs.';
-  playBtn.textContent = 'Start match';
-  menuOverlay.classList.add('hidden');
-  
+// ── Screen Flow ──
+
+function showScreen(screenEl) {
+  [titleScreen, selectScreen].forEach(function(s) { s.classList.add('hidden'); });
+  if (screenEl) screenEl.classList.remove('hidden');
+}
+
+function goToTitle() {
+  state.phase = 'menu';
+  hud.style.display = 'none';
+  tapHint.style.display = 'none';
+  titleScreen.querySelector('.title-logo').textContent = 'BRISH & MONKO';
+  titleScreen.querySelector('.title-sub').textContent = 'KICKBALL CLASH';
+  document.getElementById('titleStart').textContent = 'TAP TO START';
+  showScreen(titleScreen);
+}
+
+function goToSelect() {
+  state.phase = 'select';
+  showScreen(selectScreen);
+}
+
+function goToPlay() {
+  showScreen(null);
+  hud.style.display = '';
+  tapHint.style.display = '';
   state.phase = 'play';
-  state.roundTimer = 45;
+  state.roundTimer = 120;
   state.scoreLeft = 0;
   state.scoreRight = 0;
   state.worldIndex = 0;
@@ -984,55 +976,102 @@ function startMatch() {
   player.setHero(HEROES[state.heroSelected]);
   ai.setHero(state.heroSelected === 'brish' ? HEROES.monko : HEROES.brish);
   resetPositions(true);
-  flashStatus('Timed match. Ring more bells before the clock ends.');
-  tipLine.textContent = 'Tap left side = go left. Tap right side = go right. Auto-jump + auto-kick!';
+  flashStatus('FIGHT!');
 }
 
-heroButtons.forEach((btn) => {
-  btn.addEventListener('click', () => {
-    state.heroSelected = btn.dataset.hero;
-    heroButtons.forEach((b) => b.classList.remove('selected', 'brish', 'monko'));
-    heroButtons.forEach((b) => {
-      const hero = b.dataset.hero;
-      b.classList.toggle('selected', b === btn);
-      if (b === btn) b.classList.add(hero);
-    });
-  });
-});
-
-playBtn.addEventListener('click', startMatch);
-playBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startMatch(); }, { passive: false });
-
-menuOverlay.addEventListener('click', (e) => {
-  if (state.phase === 'menu' && (e.target === menuOverlay || e.target.closest('.card') === null)) startMatch();
-});
-menuOverlay.addEventListener('touchstart', (e) => {
-  if (state.phase === 'menu' && (e.target === menuOverlay)) {
-    e.preventDefault();
-    startMatch();
+// Animate character preview on select cards
+function animatePreview(heroId, canvasId) {
+  var c = document.getElementById(canvasId);
+  if (!c) return;
+  var pctx = c.getContext('2d');
+  var frames = FRAME_KEYS.idle;
+  var frameIdx = 0;
+  var lastT = 0;
+  function tick(ts) {
+    if (!c.isConnected) return;
+    if (ts - lastT > 200) {
+      lastT = ts;
+      frameIdx = (frameIdx + 1) % frames.length;
+    }
+    var key = heroId + '_' + frames[frameIdx];
+    var img = ASSETS[key];
+    pctx.clearRect(0, 0, c.width, c.height);
+    if (img) {
+      var scale = Math.min(c.width / 320, c.height / 426) * 0.9;
+      var dw = 320 * scale;
+      var dh = 426 * scale;
+      pctx.drawImage(img, 0, 0, 320, 426, (c.width - dw) / 2, (c.height - dh) / 2, dw, dh);
+    }
+    requestAnimationFrame(tick);
   }
+  requestAnimationFrame(tick);
+}
+
+// ── Event Listeners ──
+
+// Title screen: tap anywhere to go to character select
+titleScreen.addEventListener('click', function() {
+  if (state.phase === 'menu' || state.phase === 'gameover') goToSelect();
+});
+titleScreen.addEventListener('touchstart', function(e) {
+  e.preventDefault();
+  if (state.phase === 'menu' || state.phase === 'gameover') goToSelect();
 }, { passive: false });
 
-howBtn.addEventListener('click', () => {
-  const text = 'Score by smashing the ball into the opponent bell. Kick near the ball for a fast shot. Power launches a nastier curve. On desktop: A/D or arrows move, W/Up/Space jump, J kick, K power.';
-  flashStatus(text);
-  tipLine.textContent = text;
+// Select screen: tap card to select, tap again to start
+heroCards.forEach(function(card) {
+  card.addEventListener('click', function() {
+    var hero = card.dataset.hero;
+    if (state.heroSelected === hero) {
+      // Already selected, start game
+      goToPlay();
+    } else {
+      state.heroSelected = hero;
+      heroCards.forEach(function(c) { c.classList.remove('selected'); });
+      card.classList.add('selected');
+    }
+  });
+  card.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    var hero = card.dataset.hero;
+    if (state.heroSelected === hero) {
+      goToPlay();
+    } else {
+      state.heroSelected = hero;
+      heroCards.forEach(function(c) { c.classList.remove('selected'); });
+      card.classList.add('selected');
+    }
+  }, { passive: false });
 });
+
+// Keyboard enter to advance screens
+window.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    if (state.phase === 'menu' || state.phase === 'gameover') goToSelect();
+    else if (state.phase === 'select') goToPlay();
+  }
+});
+
+// ── Init ──
 
 (async function init() {
   try {
     if (screen.orientation && screen.orientation.lock) {
-      screen.orientation.lock('landscape').catch(() => {});
+      screen.orientation.lock('landscape').catch(function() {});
     }
-  } catch {}
+  } catch(e) {}
 
   await loadAssets();
   resize();
-  
+
+  // Start preview animations
+  animatePreview('brish', 'previewBrish');
+  animatePreview('monko', 'previewMonko');
+
   player.setHero(HEROES[state.heroSelected]);
   ai.setHero(HEROES.monko);
   resetPositions();
   state.entitiesReady = true;
-  updateHUD();
+  goToTitle();
   requestAnimationFrame(loop);
 })();
