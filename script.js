@@ -168,13 +168,14 @@ function handleTapEnd() {
 
 // Touch events on canvas for the simple tap system
 canvas.addEventListener('touchstart', (e) => {
-  e.preventDefault();
   if (state.phase !== 'play') return;
+  e.preventDefault();
   const touch = e.changedTouches[0];
   handleTapStart(touch.clientX);
 }, { passive: false });
 
 canvas.addEventListener('touchend', (e) => {
+  if (state.phase !== 'play') return;
   e.preventDefault();
   handleTapEnd();
 }, { passive: false });
