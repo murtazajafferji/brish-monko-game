@@ -5,17 +5,17 @@ const HEROES = {
     emoji: '👑',
     color: '#ff8c42',
     tint: 'rgba(255,140,66,0.35)',
-    speed: 520,
-    accel: 2800,
-    jump: 1020,
+    speed: 540,
+    accel: 2900,
+    jump: 1160,
     radius: 54,
     mass: 1.28,
     attackReach: 105,
     attackForce: 1280,
-    attackLift: 120,
+    attackLift: 260,
     attackCd: 0.52,
     powerForce: 1900,
-    powerLift: 200,
+    powerLift: 420,
     powerCd: 2.4,
     powerName: 'Crown Cannon',
     spriteRoot: 'brish',
@@ -29,15 +29,15 @@ const HEROES = {
     tint: 'rgba(124,187,255,0.35)',
     speed: 700,
     accel: 4200,
-    jump: 1260,
+    jump: 1320,
     radius: 44,
     mass: 0.88,
     attackReach: 86,
     attackForce: 780,
-    attackLift: 320,
+    attackLift: 420,
     attackCd: 0.34,
     powerForce: 1100,
-    powerLift: 680,
+    powerLift: 880,
     powerCd: 2.0,
     powerName: 'Bloom Burst',
     spriteRoot: 'monko',
@@ -113,17 +113,81 @@ function loadImage(src) {
 }
 
 async function loadAssets() {
-  const files = [];
-  for (const hero of Object.values(HEROES)) {
-    const root = hero.spriteRoot;
-    for (const suffix of ['idle', 'walk1', 'walk2', 'walk3', 'jump', 'fall', 'attack1', 'attack2']) {
-      files.push([`${hero.id}_${suffix}`, `images/${root}_${suffix}.png`]);
-    }
-  }
-  files.push(['background', 'images/background_single.png']);
-
-  const loaded = await Promise.all(files.map(async ([key, src]) => [key, await loadImage(src)]));
+  const loaded = await Promise.all([
+    ['background', await loadImage('images/background_single.png')],
+  ]);
   loaded.forEach(([key, img]) => { ASSETS[key] = img; });
+}
+
+function setPixelMode(targetCtx) {
+  targetCtx.imageSmoothingEnabled = false;
+  targetCtx.webkitImageSmoothingEnabled = false;
+  targetCtx.mozImageSmoothingEnabled = false;
+  targetCtx.msImageSmoothingEnabled = false;
+}
+
+function drawPixelRect(targetCtx, x, y, w, h, color) {
+  targetCtx.fillStyle = color;
+  targetCtx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+}
+
+function drawPixelFighter(targetCtx, hero, x, y, facing, anim, frameTick, scale = 1) {
+  const px = 4 * scale;
+  const skin = '#f5d7b2';
+  const white = '#fff7ef';
+  const dark = '#181423';
+  const accent = hero.id === 'brish' ? '#ff8c42' : '#7cbbff';
+  const accent2 = hero.id === 'brish' ? '#ffcf7a' : '#c7e4ff';
+
+  targetCtx.save();
+  targetCtx.translate(Math.round(x), Math.round(y));
+  targetCtx.scale(facing, 1);
+
+  const bob = anim === 'run' ? ((frameTick % 2) ? 1 : 0) * px : 0;
+  const armReach = anim === 'attack' ? 3 * px : anim === 'power' ? 4 * px : 0;
+  const jumpLift = (anim === 'jump' || anim === 'fall') ? -1 * px : 0;
+
+  // shadow
+  drawPixelRect(targetCtx, -5 * px, 14 * px, 10 * px, 2 * px, 'rgba(0,0,0,0.22)');
+
+  // legs
+  drawPixelRect(targetCtx, -2 * px, (8 * px) + bob, 2 * px, 5 * px, dark);
+  drawPixelRect(targetCtx, 0, (8 * px) + bob, 2 * px, 5 * px, dark);
+  if (anim === 'run') {
+    drawPixelRect(targetCtx, -4 * px, (10 * px) + bob, 2 * px, 2 * px, accent);
+    drawPixelRect(targetCtx, 2 * px, (9 * px) + bob, 2 * px, 2 * px, accent);
+  } else {
+    drawPixelRect(targetCtx, -3 * px, (11 * px) + bob, 2 * px, 2 * px, accent);
+    drawPixelRect(targetCtx, 1 * px, (11 * px) + bob, 2 * px, 2 * px, accent);
+  }
+
+  // body
+  drawPixelRect(targetCtx, -4 * px, (1 * px) + jumpLift, 8 * px, 8 * px, accent);
+  drawPixelRect(targetCtx, -3 * px, (2 * px) + jumpLift, 6 * px, 6 * px, white);
+  drawPixelRect(targetCtx, -2 * px, (3 * px) + jumpLift, 4 * px, 4 * px, accent2);
+
+  // head
+  drawPixelRect(targetCtx, -3 * px, (-4 * px) + jumpLift, 6 * px, 5 * px, skin);
+  drawPixelRect(targetCtx, -4 * px, (-5 * px) + jumpLift, 8 * px, 2 * px, dark);
+  if (hero.id === 'brish') {
+    drawPixelRect(targetCtx, -1 * px, (-8 * px) + jumpLift, 2 * px, 3 * px, '#ffd44d');
+    drawPixelRect(targetCtx, -2 * px, (-7 * px) + jumpLift, 4 * px, 1 * px, '#ffd44d');
+  } else {
+    drawPixelRect(targetCtx, -4 * px, (-6 * px) + jumpLift, 2 * px, 2 * px, '#ff9ed2');
+    drawPixelRect(targetCtx, 2 * px, (-6 * px) + jumpLift, 2 * px, 2 * px, '#ff9ed2');
+  }
+  drawPixelRect(targetCtx, -2 * px, (-2 * px) + jumpLift, 1 * px, 1 * px, dark);
+  drawPixelRect(targetCtx, 1 * px, (-2 * px) + jumpLift, 1 * px, 1 * px, dark);
+
+  // arms
+  drawPixelRect(targetCtx, (-6 * px) - armReach, (2 * px) + jumpLift, 2 * px + armReach, 2 * px, skin);
+  drawPixelRect(targetCtx, 4 * px, (2 * px) + jumpLift, 2 * px, 2 * px, skin);
+  if (anim === 'power') {
+    drawPixelRect(targetCtx, (-8 * px), 0 + jumpLift, 2 * px, 2 * px, '#ffffff');
+    drawPixelRect(targetCtx, (-10 * px), -2 * px + jumpLift, 2 * px, 2 * px, accent);
+  }
+
+  targetCtx.restore();
 }
 
 // Simplified input: tap left half = go left + jump + attack left
@@ -215,6 +279,7 @@ window.addEventListener('keyup', (event) => {
 function resize() {
   canvas.width = Math.floor(window.innerWidth * Math.min(window.devicePixelRatio || 1, 1.5));
   canvas.height = Math.floor(window.innerHeight * Math.min(window.devicePixelRatio || 1, 1.5));
+  setPixelMode(ctx);
   state.w = canvas.width;
   state.h = canvas.height;
   state.floorY = state.h - Math.max(110, state.h * 0.17);
@@ -289,8 +354,9 @@ class Fighter {
       this.onGround = false;
     }
 
-    if (!this.onGround && this.intent.jump && this.vy < -200) {
-      this.vy -= 320 * dt;
+    // stronger hold jump so taps can create useful aerial follow-ups
+    if (!this.onGround && this.intent.jump && this.vy < -120) {
+      this.vy -= 520 * dt;
     }
 
     this.vy += 2800 * dt;
@@ -321,7 +387,7 @@ class Fighter {
       this.hitBall(ball, false);
       if (dist(this.x, this.y - 60, opponent.x, opponent.y - 60) < this.hero.attackReach + 34) {
         opponent.vx += this.facing * 180;
-        opponent.vy -= 90;
+        opponent.vy -= 130;
         opponent.hitFlash = 0.12;
       }
       spawnBurst(this.x + this.facing * 40, this.y - 80, this.hero.color, 12, 220);
@@ -342,16 +408,21 @@ class Fighter {
 
   hitBall(ball, isPower) {
     const hitX = this.x + this.facing * (this.hero.attackReach * 0.72);
-    const hitY = this.y - 68;
+    const hitY = this.y - 72;
     const range = isPower ? this.hero.attackReach + 44 : this.hero.attackReach;
     const d = dist(hitX, hitY, ball.x, ball.y);
     if (d < range + ball.r) {
       const force = isPower ? this.hero.powerForce : this.hero.attackForce;
       const lift = isPower ? this.hero.powerLift : this.hero.attackLift;
       const bonus = clamp((range + ball.r - d) / (range + ball.r), 0.2, 1);
+      const aboveBall = ball.y < this.y - 80;
+      const risingPop = aboveBall ? 1.3 : 1.0;
       ball.vx += this.facing * force * bonus / ball.mass;
-      ball.vy -= lift * bonus / ball.mass;
-      ball.spin += this.facing * (isPower ? 24 : 12) * bonus;
+      ball.vy -= lift * bonus * risingPop / ball.mass;
+      // extra RL Sideswipe-style pop when striking from underneath / close
+      if (!isPower && Math.abs(this.y - ball.y) < 90) ball.vy -= 180 * bonus;
+      if (isPower) ball.vy -= 260 * bonus;
+      ball.spin += this.facing * (isPower ? 28 : 14) * bonus;
       ball.lastTouch = this.side;
       ball.trailBoost = isPower ? 1.0 : 0.55;
     }
@@ -375,51 +446,33 @@ class Fighter {
   }
 
   draw(ctx) {
-    const frameKey = FRAME_KEYS[this.anim][this.animFrame % FRAME_KEYS[this.anim].length];
-    const asset = ASSETS[`${this.hero.id}_${frameKey}`];
-    const spriteW = 320;
-    const spriteH = 426;
-    const drawH = this.height * 1.38;
-    const drawW = this.width * 1.18;
-    const x = this.x - drawW / 2;
-    const y = this.y - drawH + 8;
-
     ctx.save();
-    ctx.translate(this.x, 0);
-    ctx.scale(this.facing === 1 ? 1 : -1, 1);
-    ctx.translate(-this.x, 0);
 
     if (this.powerFlash > 0) {
       ctx.fillStyle = this.hero.tint;
       ctx.beginPath();
-      ctx.arc(this.x, this.y - 70, 70 + this.powerFlash * 50, 0, Math.PI * 2);
+      ctx.arc(this.x, this.y - 70, 46 + this.powerFlash * 40, 0, Math.PI * 2);
       ctx.fill();
-    }
-
-    if (asset) {
-      ctx.drawImage(asset, 0, 0, spriteW, spriteH, x, y, drawW, drawH);
-    } else {
-      ctx.fillStyle = this.hero.color;
-      ctx.fillRect(this.x - 20, this.y - 80, 40, 80);
     }
 
     if (this.hitFlash > 0) {
       ctx.globalCompositeOperation = 'screen';
-      ctx.fillStyle = 'rgba(255,255,255,0.45)';
-      ctx.fillRect(x, y, drawW, drawH);
+      ctx.globalAlpha = 0.8;
     }
 
-    // Power-ready glow
+    drawPixelFighter(ctx, this.hero, this.x, this.y - 58, this.facing === 1 ? 1 : -1, this.anim, this.animFrame, 1.1);
+
     if (this.powerCooldown <= 0) {
       ctx.globalCompositeOperation = 'screen';
-      ctx.globalAlpha = 0.18 + Math.sin(Date.now() * 0.006) * 0.08;
+      ctx.globalAlpha = 0.14 + Math.sin(Date.now() * 0.006) * 0.08;
       ctx.fillStyle = this.hero.color;
       ctx.beginPath();
-      ctx.arc(this.x, this.y - 60, 52, 0, Math.PI * 2);
+      ctx.arc(this.x, this.y - 58, 38, 0, Math.PI * 2);
       ctx.fill();
-      ctx.globalAlpha = 1;
-      ctx.globalCompositeOperation = 'source-over';
     }
+
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
     ctx.restore();
   }
 }
@@ -443,7 +496,7 @@ class Ball {
   }
 
   update(dt, players) {
-    this.vy += 2100 * dt;
+    this.vy += 1850 * dt;
     this.x += this.vx * dt;
     this.y += this.vy * dt;
     this.rotation += (this.vx * 0.002 + this.spin * 0.018) * dt * 60;
@@ -453,7 +506,7 @@ class Ball {
     if (this.y + this.r >= state.floorY) {
       this.y = state.floorY - this.r;
       if (Math.abs(this.vy) > 180) spawnDust(this.x, state.floorY, '#fff3c8', 8);
-      this.vy *= -0.72;
+      this.vy *= -0.78;
       this.vx *= 0.985;
       this.spin += this.vx * 0.004;
       if (Math.abs(this.vy) < 40) this.vy = 0;
@@ -493,34 +546,22 @@ class Ball {
 
   draw(ctx) {
     ctx.save();
-    ctx.translate(this.x, this.y);
+    ctx.translate(Math.round(this.x), Math.round(this.y));
     ctx.rotate(this.rotation);
-    ctx.fillStyle = '#fff8ec';
-    ctx.beginPath();
-    ctx.arc(0, 0, this.r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = '#1c102a';
-    ctx.stroke();
-    ctx.strokeStyle = 'rgba(255,140,66,0.65)';
-    ctx.beginPath();
-    ctx.arc(0, 0, this.r * 0.72, -0.8, 0.6);
-    ctx.stroke();
-    ctx.strokeStyle = 'rgba(124,187,255,0.65)';
-    ctx.beginPath();
-    ctx.arc(0, 0, this.r * 0.72, 2.2, 3.6);
-    ctx.stroke();
+
+    // chunky arcade ball
+    drawPixelRect(ctx, -20, -20, 40, 40, '#f7f2de');
+    drawPixelRect(ctx, -16, -16, 32, 32, '#fff8ec');
+    drawPixelRect(ctx, -8, -16, 8, 32, '#1c102a');
+    drawPixelRect(ctx, 0, -8, 16, 8, '#ff8c42');
+    drawPixelRect(ctx, -16, 0, 16, 8, '#7cbbff');
     ctx.restore();
 
     if (this.trailBoost > 0) {
       ctx.save();
-      ctx.globalAlpha = this.trailBoost * 0.32;
-      ctx.strokeStyle = this.lastTouch === 'left' ? HEROES.brish.color : HEROES.monko.color;
-      ctx.lineWidth = 8;
-      ctx.beginPath();
-      ctx.moveTo(this.x, this.y);
-      ctx.lineTo(this.x - this.vx * 0.04, this.y - this.vy * 0.04);
-      ctx.stroke();
+      ctx.globalAlpha = this.trailBoost * 0.28;
+      const col = this.lastTouch === 'left' ? HEROES.brish.color : HEROES.monko.color;
+      drawPixelRect(ctx, this.x - this.vx * 0.03 - 10, this.y - this.vy * 0.03 - 6, 20, 12, col);
       ctx.restore();
     }
   }
@@ -560,10 +601,7 @@ function drawParticles(ctx) {
   particles.forEach((p) => {
     const alpha = 1 - p.age / p.life;
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = p.color;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2);
-    ctx.fill();
+    drawPixelRect(ctx, p.x - (p.size * alpha) / 2, p.y - (p.size * alpha) / 2, Math.max(2, p.size * alpha), Math.max(2, p.size * alpha), p.color);
   });
   ctx.globalAlpha = 1;
 }
@@ -762,12 +800,12 @@ function drawBackground() {
     ctx.globalAlpha = 1;
   }
 
-  for (let i = 0; i < 8; i += 1) {
-    const x = (i / 7) * state.w;
-    const y = state.h * 0.24 + Math.sin(i * 1.9 + state.last * 0.0004) * 18;
-    ctx.font = (28 + (i % 3) * 8) + 'px serif';
-    ctx.globalAlpha = 0.26;
-    ctx.fillText(world.crowd[i % world.crowd.length], x, y);
+  for (let i = 0; i < 10; i += 1) {
+    const x = 20 + (i / 9) * (state.w - 40);
+    const y = state.h * 0.22 + Math.sin(i * 1.7 + state.last * 0.0005) * 14;
+    ctx.globalAlpha = 0.22;
+    drawPixelRect(ctx, x, y, 18, 18, i % 2 ? world.accent : '#ffffff');
+    drawPixelRect(ctx, x + 22, y + 6, 10, 10, 'rgba(255,255,255,0.3)');
   }
   ctx.globalAlpha = 1;
 
@@ -797,10 +835,8 @@ function drawBackground() {
       const x = 60 + i * (state.w / 6.5);
       const y = state.floorY - 40 - (i % 3) * 24;
       ctx.fillStyle = i % 2 ? 'rgba(255,141,216,0.33)' : 'rgba(255,255,255,0.18)';
-      ctx.fillRect(x, y, 22, 22);
-      ctx.beginPath();
-      ctx.arc(x + 58, y + 20, 16, 0, Math.PI * 2);
-      ctx.fill();
+      drawPixelRect(ctx, x, y, 22, 22, ctx.fillStyle);
+      drawPixelRect(ctx, x + 52, y + 8, 18, 18, 'rgba(255,255,255,0.18)');
     }
   }
 
@@ -814,34 +850,23 @@ function drawBell(x, side) {
   const world = WORLDS[state.worldIndex % WORLDS.length];
   const topY = state.floorY - 295;
   const bellY = state.floorY - 210;
-  ctx.strokeStyle = '#f6edd8';
-  ctx.lineWidth = 6;
-  ctx.beginPath();
-  ctx.moveTo(x, topY);
-  ctx.lineTo(x, bellY - 34);
-  ctx.stroke();
 
-  ctx.fillStyle = world.bell;
-  ctx.beginPath();
-  ctx.arc(x, bellY, 34, Math.PI, 0);
-  ctx.lineTo(x + 30, bellY + 18);
-  ctx.quadraticCurveTo(x, bellY + 40, x - 30, bellY + 18);
-  ctx.closePath();
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(28,16,42,0.4)';
-  ctx.stroke();
+  // temple post / bracket
+  drawPixelRect(ctx, x - 4, topY, 8, 46, '#d8d0bb');
+  drawPixelRect(ctx, x - 26, topY - 12, 52, 10, '#5a432b');
 
-  ctx.fillStyle = 'rgba(28,16,42,0.34)';
-  ctx.beginPath();
-  ctx.arc(x, bellY + 16, 8, 0, Math.PI * 2);
-  ctx.fill();
+  // pixel bell
+  drawPixelRect(ctx, x - 24, bellY - 12, 48, 10, world.bell);
+  drawPixelRect(ctx, x - 30, bellY - 2, 60, 12, world.bell);
+  drawPixelRect(ctx, x - 26, bellY + 10, 52, 10, world.bell);
+  drawPixelRect(ctx, x - 18, bellY + 20, 36, 8, world.bell);
+  drawPixelRect(ctx, x - 4, bellY + 28, 8, 8, '#2b1b12');
 
-  ctx.fillStyle = side === 'left' ? 'rgba(255,124,159,0.9)' : 'rgba(124,245,170,0.9)';
-  ctx.fillRect(x - 28, topY - 18, 56, 20);
+  drawPixelRect(ctx, x - 28, topY - 22, 56, 12, side === 'left' ? '#ff7c9f' : '#7cf5aa');
   ctx.fillStyle = '#28192a';
   ctx.font = '700 12px Fredoka';
   ctx.textAlign = 'center';
-  ctx.fillText(side === 'left' ? 'MONKO' : 'BRISH', x, topY - 4);
+  ctx.fillText(side === 'left' ? 'MONKO' : 'BRISH', x, topY - 12);
 }
 
 function drawMidline() {
@@ -985,24 +1010,26 @@ function animatePreview(heroId, canvasId) {
   var c = document.getElementById(canvasId);
   if (!c) return;
   var pctx = c.getContext('2d');
-  var frames = FRAME_KEYS.idle;
+  setPixelMode(pctx);
   var frameIdx = 0;
   var lastT = 0;
   function tick(ts) {
     if (!c.isConnected) return;
-    if (ts - lastT > 200) {
+    if (ts - lastT > 180) {
       lastT = ts;
-      frameIdx = (frameIdx + 1) % frames.length;
+      frameIdx = (frameIdx + 1) % 4;
     }
-    var key = heroId + '_' + frames[frameIdx];
-    var img = ASSETS[key];
     pctx.clearRect(0, 0, c.width, c.height);
-    if (img) {
-      var scale = Math.min(c.width / 320, c.height / 426) * 0.9;
-      var dw = 320 * scale;
-      var dh = 426 * scale;
-      pctx.drawImage(img, 0, 0, 320, 426, (c.width - dw) / 2, (c.height - dh) / 2, dw, dh);
-    }
+    drawPixelFighter(
+      pctx,
+      HEROES[heroId],
+      c.width / 2,
+      c.height / 2 + 24,
+      1,
+      frameIdx % 2 ? 'run' : 'idle',
+      frameIdx,
+      1.2
+    );
     requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
