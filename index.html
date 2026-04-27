@@ -213,6 +213,25 @@
       .hero-card { padding: 12px; }
       .hero-card canvas { height: 110px; }
     }
+
+    /* Block portrait mode entirely */
+    #portraitBlock {
+      display: none;
+      position: fixed; inset: 0; z-index: 9999;
+      background: #0a0618;
+      align-items: center; justify-content: center;
+      flex-direction: column;
+      text-align: center; padding: 24px;
+    }
+    #portraitBlock .msg {
+      font-family: var(--arcade-font);
+      font-size: clamp(0.6rem, 2.5vw, 0.9rem);
+      color: var(--gold);
+      line-height: 2;
+    }
+    @media (orientation: portrait) {
+      #portraitBlock { display: flex; }
+    }
   </style>
 </head>
 <body>
@@ -273,6 +292,7 @@
   </div>
 
   </div>
+  <div id="portraitBlock"><div class="msg">PLEASE ROTATE<br/>TO LANDSCAPE</div></div>
   <script src="script.js"></script>
 </body>
 </html>

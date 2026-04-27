@@ -246,7 +246,7 @@ class Fighter {
     this.height = 112;
     this.facing = side === 'left' ? 1 : -1;
     this.onGround = true;
-    this.jumpsLeft = 3;
+    this.jumpsLeft = 2;
     this.jumpTriggered = false;
     this.attackTimer = 0;
     this.attackCooldown = 0;
@@ -286,7 +286,7 @@ class Fighter {
     this.vx = clamp(this.vx, -maxSpeed, maxSpeed);
 
     if (this.intent.jump && !this.jumpTriggered && this.jumpsLeft > 0) {
-      this.vy = -this.hero.jump * (this.jumpsLeft === 3 ? 1.0 : 0.85);
+      this.vy = -this.hero.jump * (this.jumpsLeft === 2 ? 1.0 : 0.82);
       this.jumpsLeft -= 1;
       this.onGround = false;
       this.jumpTriggered = true;
@@ -312,7 +312,7 @@ class Fighter {
       this.y = state.floorY;
       this.vy = 0;
       this.onGround = true;
-      this.jumpsLeft = 3;
+      this.jumpsLeft = 2;
     }
 
     this.attackCooldown = Math.max(0, this.attackCooldown - dt);
