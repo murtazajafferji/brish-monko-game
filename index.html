@@ -3,424 +3,290 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="screen-orientation" content="landscape" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="theme-color" content="#1d102b" />
+  <meta name="theme-color" content="#0a0618" />
   <title>Brish & Monko: Kickball Clash</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #120a1b;
-      --panel: rgba(15, 10, 28, 0.82);
-      --panel-strong: rgba(23, 14, 40, 0.94);
-      --line: rgba(255,255,255,0.14);
+      --bg: #0a0618;
       --text: #fff7f0;
-      --muted: rgba(255,247,240,0.74);
+      --muted: rgba(255,247,240,0.6);
       --gold: #ffd44d;
       --brish: #ff8c42;
       --monko: #7cbbff;
-      --good: #7cf5aa;
-      --danger: #ff7c9f;
+      --arcade-font: 'Press Start 2P', monospace;
+      --ui-font: 'Fredoka', system-ui, sans-serif;
     }
-
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: radial-gradient(circle at top, #2a1643 0%, var(--bg) 58%, #08040d 100%);
-      font-family: 'Fredoka', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      width: 100%; height: 100%; overflow: hidden;
+      background: var(--bg);
+      font-family: var(--ui-font);
       color: var(--text);
-      touch-action: none;
-      user-select: none;
+      touch-action: none; user-select: none;
       -webkit-user-select: none;
       -webkit-tap-highlight-color: transparent;
     }
+    canvas { display: block; width: 100%; height: 100%; }
 
-    #app {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
+    /* ── Screens ── */
+    .screen {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 20px;
+      transition: opacity 300ms ease;
+      z-index: 10;
     }
+    .screen.hidden { opacity: 0; pointer-events: none; z-index: -1; }
 
-    canvas {
-      display: block;
-      width: 100%;
-      height: 100%;
-    }
-
-    .hud {
-      position: absolute;
-      inset: env(safe-area-inset-top, 0px) 0 auto 0;
-      padding: 14px 16px 0;
-      pointer-events: none;
-    }
-
-    .scorebar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      max-width: 920px;
-      margin: 0 auto;
-      padding: 10px 14px;
-      background: linear-gradient(180deg, rgba(38,23,62,0.92), rgba(17,11,31,0.84));
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      box-shadow: 0 16px 50px rgba(0,0,0,0.28);
-      backdrop-filter: blur(14px);
-    }
-
-    .team {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 0;
-    }
-
-    .team.right { flex-direction: row-reverse; }
-
-    .avatar {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      display: grid;
-      place-items: center;
-      font-size: 1.4rem;
-      font-weight: 700;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.18);
-    }
-
-    .avatar.brish { background: linear-gradient(180deg, #ffac6b, #ff7a18); }
-    .avatar.monko { background: linear-gradient(180deg, #a9d4ff, #548fff); }
-
-    .meta { min-width: 0; }
-    .meta .label {
-      font-size: 0.76rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-    .meta .name {
-      font-size: 1.05rem;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .score-center {
+    /* ── Title Screen ── */
+    #titleScreen {
+      background: radial-gradient(ellipse at 50% 30%, #1e1240 0%, #0a0618 70%);
       text-align: center;
-      min-width: 170px;
     }
-    .score-center .world {
-      font-size: 0.82rem;
+    .title-logo {
+      font-family: var(--arcade-font);
+      font-size: clamp(1.2rem, 5vw, 2.4rem);
       color: var(--gold);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      text-shadow: 0 0 20px rgba(255,212,77,0.5), 0 4px 0 #b8860b;
+      line-height: 1.6;
+      margin-bottom: 8px;
     }
-    .score-center .score {
-      font-size: clamp(1.6rem, 4vw, 2.4rem);
-      font-weight: 700;
-      line-height: 1;
-      margin-top: 4px;
-    }
-    .score-center .sub {
-      margin-top: 4px;
-      font-size: 0.85rem;
+    .title-sub {
+      font-family: var(--arcade-font);
+      font-size: clamp(0.55rem, 2vw, 0.85rem);
       color: var(--muted);
-    }
-
-    .overlay {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      background: rgba(7, 4, 14, 0.38);
-      transition: opacity 220ms ease, visibility 220ms ease;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      touch-action: pan-y;
-    }
-
-    .overlay.hidden {
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-    }
-
-    .card {
-      width: min(760px, 100%);
-      background: linear-gradient(180deg, rgba(31,20,51,0.96), rgba(17,11,31,0.96));
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 26px;
-      padding: 24px;
-      box-shadow: 0 30px 90px rgba(0,0,0,0.44);
-      backdrop-filter: blur(14px);
-      margin: auto;
-    }
-
-    .kicker {
-      color: var(--gold);
       letter-spacing: 0.12em;
-      text-transform: uppercase;
-      font-size: 0.78rem;
+      margin-bottom: 30px;
+    }
+    .blink {
+      font-family: var(--arcade-font);
+      font-size: clamp(0.65rem, 2.4vw, 0.95rem);
+      color: var(--gold);
+      animation: blink 1.2s step-start infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+    .title-controls {
+      margin-top: 24px;
+      font-family: var(--arcade-font);
+      font-size: clamp(0.45rem, 1.6vw, 0.6rem);
+      color: var(--muted);
+      line-height: 2.2;
+    }
+
+    /* ── Character Select ── */
+    #selectScreen {
+      background: radial-gradient(ellipse at 50% 40%, #18103a 0%, #0a0618 70%);
+    }
+    .select-title {
+      font-family: var(--arcade-font);
+      font-size: clamp(0.7rem, 2.8vw, 1.1rem);
+      color: var(--gold);
+      text-shadow: 0 0 12px rgba(255,212,77,0.4);
+      margin-bottom: 24px;
+    }
+    .hero-cards {
+      display: flex; gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      max-width: 600px;
+    }
+    .hero-card {
+      width: clamp(140px, 38vw, 220px);
+      background: rgba(255,255,255,0.04);
+      border: 3px solid rgba(255,255,255,0.1);
+      border-radius: 18px;
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-card:active { transform: scale(0.96); }
+    .hero-card.selected {
+      border-color: var(--gold);
+      box-shadow: 0 0 30px rgba(255,212,77,0.25);
+      transform: scale(1.04);
+    }
+    .hero-card canvas {
+      width: 100%; height: 140px;
+      image-rendering: pixelated;
       margin-bottom: 10px;
     }
-
-    h1 {
-      margin: 0 0 10px;
-      font-size: clamp(2rem, 6vw, 3.8rem);
-      line-height: 0.96;
-    }
-
-    .lead {
-      margin: 0;
-      color: var(--muted);
-      font-size: clamp(0.98rem, 2.6vw, 1.08rem);
-      line-height: 1.45;
-    }
-
-    .hero-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-      margin-top: 18px;
-    }
-
-    .hero-btn {
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.04);
-      color: var(--text);
-      border-radius: 22px;
-      padding: 16px;
-      text-align: left;
-      cursor: pointer;
-      transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
-    }
-
-    .hero-btn:active { transform: scale(0.98); }
-    .hero-btn.selected.brish {
-      background: rgba(255, 140, 66, 0.14);
-      border-color: rgba(255, 176, 114, 0.66);
-      box-shadow: 0 14px 30px rgba(255, 140, 66, 0.16);
-    }
-    .hero-btn.selected.monko {
-      background: rgba(124, 187, 255, 0.14);
-      border-color: rgba(157, 206, 255, 0.66);
-      box-shadow: 0 14px 30px rgba(124, 187, 255, 0.16);
-    }
-
-    .hero-title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 1.15rem;
-      font-weight: 700;
+    .hero-card .name {
+      font-family: var(--arcade-font);
+      font-size: clamp(0.6rem, 2vw, 0.8rem);
       margin-bottom: 6px;
     }
-    .hero-title span.emoji { font-size: 1.25rem; }
-    .hero-copy {
+    .hero-card.brish-card .name { color: var(--brish); }
+    .hero-card.monko-card .name { color: var(--monko); }
+    .hero-card .desc {
+      font-size: 0.85rem;
       color: var(--muted);
-      font-size: 0.92rem;
       line-height: 1.4;
     }
-
-    .fact-row {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0,1fr));
-      gap: 12px;
-      margin-top: 18px;
-    }
-    .fact {
-      padding: 14px;
-      border-radius: 18px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-    .fact strong { display: block; margin-bottom: 4px; font-size: 1rem; }
-    .fact span { color: var(--muted); font-size: 0.92rem; line-height: 1.35; }
-
-    .actions {
-      margin-top: 18px;
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .primary,
-    .secondary,
-    .touch-btn {
-      border: 0;
-      border-radius: 999px;
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
-      color: var(--text);
-      transition: transform 120ms ease, filter 120ms ease, background 120ms ease;
-    }
-
-    .primary:active,
-    .secondary:active,
-    .touch-btn:active { transform: scale(0.97); }
-
-    .primary {
-      padding: 14px 22px;
-      background: linear-gradient(180deg, #ffd85e, #ffba2c);
-      color: #2b1900;
-      box-shadow: 0 14px 24px rgba(255, 197, 72, 0.28);
-    }
-
-    .secondary {
-      padding: 14px 18px;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(255,255,255,0.12);
-    }
-
-
-    .tip {
-      position: absolute;
-      left: 50%;
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 98px);
-      transform: translateX(-50%);
-      padding: 9px 14px;
-      background: rgba(16, 10, 28, 0.78);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 999px;
+    .hero-card .stats {
+      margin-top: 10px;
+      font-family: var(--arcade-font);
+      font-size: 0.5rem;
       color: var(--muted);
-      font-size: 0.9rem;
+      text-align: left;
+    }
+    .stats .bar {
+      display: flex; align-items: center; gap: 6px;
+      margin-bottom: 4px;
+    }
+    .bar-label { width: 50px; }
+    .bar-fill-bg {
+      flex: 1; height: 8px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 400ms ease;
+    }
+    .select-go {
+      margin-top: 28px;
+      font-family: var(--arcade-font);
+      font-size: clamp(0.55rem, 2vw, 0.75rem);
+      color: var(--gold);
+      animation: blink 1.2s step-start infinite;
+    }
+
+    /* ── HUD ── */
+    .hud {
+      position: absolute; top: 0; left: 0; right: 0;
+      padding: max(8px, env(safe-area-inset-top, 0px)) 10px 0;
+      pointer-events: none; z-index: 5;
+    }
+    .scorebar {
+      display: flex; align-items: center; justify-content: center;
+      gap: 16px;
+      font-family: var(--arcade-font);
       text-align: center;
-      backdrop-filter: blur(10px);
-      pointer-events: none;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+    }
+    .sb-name {
+      font-size: clamp(0.5rem, 1.6vw, 0.7rem);
+      min-width: 80px;
+    }
+    .sb-name.left { color: var(--brish); text-align: right; }
+    .sb-name.right { color: var(--monko); text-align: left; }
+    .sb-score {
+      font-size: clamp(1.2rem, 4vw, 2rem);
+      color: var(--gold);
+      text-shadow: 0 0 10px rgba(255,212,77,0.4);
+      min-width: 100px;
+    }
+    .sb-timer {
+      font-size: clamp(0.45rem, 1.4vw, 0.6rem);
+      color: var(--muted);
+      margin-top: 4px;
     }
 
-    @media (pointer: fine) {
-      .touch-controls { opacity: 0; pointer-events: none; }
-      .tip { bottom: 18px; }
+    /* ── Tap zones visual hint ── */
+    .tap-hint {
+      position: absolute; bottom: max(14px, env(safe-area-inset-bottom, 0px));
+      left: 50%; transform: translateX(-50%);
+      font-family: var(--arcade-font);
+      font-size: clamp(0.4rem, 1.2vw, 0.5rem);
+      color: rgba(255,255,255,0.25);
+      pointer-events: none; z-index: 5;
+      text-align: center;
     }
 
-    @media (max-width: 780px) {
-      .overlay {
-        align-items: flex-start;
-        padding: max(12px, env(safe-area-inset-top, 0px)) 12px max(12px, env(safe-area-inset-bottom, 0px));
-      }
-      .card {
-        padding: 16px;
-        border-radius: 22px;
-        max-height: none;
-      }
-      h1 { font-size: clamp(1.7rem, 8vw, 2.4rem); }
-      .lead { font-size: 0.92rem; line-height: 1.34; }
-      .hero-grid, .fact-row { grid-template-columns: 1fr; }
-      .fact-row { gap: 10px; margin-top: 14px; }
-      .fact { padding: 12px; }
-      .actions {
-        position: sticky;
-        bottom: 0;
-        margin-top: 14px;
-        padding-top: 10px;
-        background: linear-gradient(180deg, rgba(17,11,31,0), rgba(17,11,31,0.92) 28%);
-      }
-      .primary, .secondary {
-        flex: 1 1 0;
-        min-height: 50px;
-      }
-      .scorebar {
-        padding: 10px 10px;
-        gap: 10px;
-      }
-      .meta .label { font-size: 0.66rem; }
-      .meta .name { font-size: 0.94rem; }
-      .avatar { width: 40px; height: 40px; border-radius: 12px; }
-      .tip {
-        width: calc(100% - 28px);
-        border-radius: 16px;
-        bottom: calc(env(safe-area-inset-bottom, 0px) + 84px);
-      }
+    /* ── Portrait lock overlay ── */
+    #rotatePlease {
+      position: fixed; inset: 0; z-index: 999;
+      background: var(--bg);
+      display: none;
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 24px;
+      font-family: var(--arcade-font);
+      color: var(--gold);
+    }
+    #rotatePlease .rotate-icon { font-size: 3rem; margin-bottom: 16px; }
+    #rotatePlease .rotate-text { font-size: clamp(0.5rem, 2vw, 0.7rem); line-height: 2; color: var(--muted); }
+    @media (orientation: portrait) and (max-width: 900px) {
+      #rotatePlease { display: flex; }
+    }
+
+    @media (max-width: 500px) {
+      .hero-cards { gap: 12px; }
+      .hero-card { padding: 12px; }
+      .hero-card canvas { height: 110px; }
     }
   </style>
 </head>
 <body>
-  <div id="app">
-    <canvas id="gameCanvas" aria-label="Brish and Monko kickball game"></canvas>
+  <canvas id="gameCanvas"></canvas>
 
-    <div class="hud">
-      <div class="scorebar">
-        <div class="team" id="leftTeamMeta">
-          <div class="avatar brish" id="leftAvatar">👑</div>
-          <div class="meta">
-            <div class="label">You</div>
-            <div class="name" id="leftName">Brish</div>
-          </div>
+  <div class="hud" id="hud" style="display:none">
+    <div class="scorebar">
+      <div class="sb-name left" id="hudLeftName">BRISH</div>
+      <div>
+        <div class="sb-score"><span id="hudLeftScore">0</span> - <span id="hudRightScore">0</span></div>
+        <div class="sb-timer" id="hudTimer">2:00</div>
+      </div>
+      <div class="sb-name right" id="hudRightName">MONKO</div>
+    </div>
+  </div>
+
+  <div class="tap-hint" id="tapHint" style="display:none">TAP LEFT ◀ &nbsp; ▶ TAP RIGHT</div>
+
+  <!-- Title Screen -->
+  <div class="screen" id="titleScreen">
+    <div class="title-logo">BRISH & MONKO</div>
+    <div class="title-sub">⚡ KICKBALL CLASH ⚡</div>
+    <div class="blink" id="titleStart">TAP TO START</div>
+    <div class="title-controls">
+      TAP LEFT SIDE = MOVE LEFT<br/>
+      TAP RIGHT SIDE = MOVE RIGHT<br/>
+      AUTO JUMP &bull; AUTO KICK
+    </div>
+  </div>
+
+  <!-- Character Select -->
+  <div class="screen hidden" id="selectScreen">
+    <div class="select-title">CHOOSE YOUR FIGHTER</div>
+    <div class="hero-cards">
+      <div class="hero-card brish-card selected" data-hero="brish">
+        <canvas id="previewBrish" width="160" height="140"></canvas>
+        <div class="name">BRISH</div>
+        <div class="desc">Heavy hitter. Crown Cannon sends the ball flying.</div>
+        <div class="stats">
+          <div class="bar"><span class="bar-label">POWER</span><div class="bar-fill-bg"><div class="bar-fill" style="width:90%;background:var(--brish)"></div></div></div>
+          <div class="bar"><span class="bar-label">SPEED</span><div class="bar-fill-bg"><div class="bar-fill" style="width:50%;background:var(--brish)"></div></div></div>
+          <div class="bar"><span class="bar-label">JUMP</span><div class="bar-fill-bg"><div class="bar-fill" style="width:55%;background:var(--brish)"></div></div></div>
         </div>
-
-        <div class="score-center">
-          <div class="world" id="worldName">Lego Land</div>
-          <div class="score"><span id="leftScore">0</span> — <span id="rightScore">0</span></div>
-          <div class="sub" id="statusLine">First to 5 bells wins</div>
-        </div>
-
-        <div class="team right" id="rightTeamMeta">
-          <div class="avatar monko" id="rightAvatar">🌸</div>
-          <div class="meta">
-            <div class="label">AI rival</div>
-            <div class="name" id="rightName">Monko</div>
-          </div>
+      </div>
+      <div class="hero-card monko-card" data-hero="monko">
+        <canvas id="previewMonko" width="160" height="140"></canvas>
+        <div class="name">MONKO</div>
+        <div class="desc">Quick and agile. Bloom Burst curves the ball sky-high.</div>
+        <div class="stats">
+          <div class="bar"><span class="bar-label">POWER</span><div class="bar-fill-bg"><div class="bar-fill" style="width:55%;background:var(--monko)"></div></div></div>
+          <div class="bar"><span class="bar-label">SPEED</span><div class="bar-fill-bg"><div class="bar-fill" style="width:90%;background:var(--monko)"></div></div></div>
+          <div class="bar"><span class="bar-label">JUMP</span><div class="bar-fill-bg"><div class="bar-fill" style="width:85%;background:var(--monko)"></div></div></div>
         </div>
       </div>
     </div>
+    <div class="select-go">TAP AGAIN TO FIGHT</div>
+  </div>
 
-    <div class="overlay" id="menuOverlay">
-      <div class="card">
-        <div class="kicker">Arcade match intro</div>
-        <h1>Brish &amp; Monko<br />Kickball Clash</h1>
-        <p class="lead">
-          Fast side-view duels. Hit the ball into the opponent's hanging bell. Jump, kick, slam, score.
-          Pick your fighter and start immediately.
-        </p>
-
-        <div class="hero-grid">
-          <button class="hero-btn selected brish" data-hero="brish">
-            <div class="hero-title"><span class="emoji">👑</span> Brish</div>
-            <div class="hero-copy">Heavy close-range hits. His Crown Cannon sends the ball flying like a rocket.</div>
-          </button>
-          <button class="hero-btn monko" data-hero="monko">
-            <div class="hero-title"><span class="emoji">🌸</span> Monko</div>
-            <div class="hero-copy">Sharper movement and trick shots. Bloom Burst curves the ball upward and forward.</div>
-          </button>
-        </div>
-
-        <div class="fact-row">
-          <div class="fact">
-            <strong>Kickball loop</strong>
-            <span>Score by smashing the ball into the opponent's bell. Quick rounds, direct scoring, arcade pace.</span>
-          </div>
-          <div class="fact">
-            <strong>Simple controls</strong>
-            <span>Tap left side of screen = move left, jump, kick left. Tap right = same but right. That's it.</span>
-          </div>
-          <div class="fact">
-            <strong>Three worlds</strong>
-            <span>Brish hits harder. Monko moves faster. Same core arena loop, different feel.</span>
-          </div>
-        </div>
-
-        <div class="actions">
-          <button class="primary" id="playBtn">Start match</button>
-          <button class="secondary" id="howBtn">How to play</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="tip" id="tipLine">Tap left side or right side of screen to play</div>
-
+  <!-- Rotate prompt -->
+  <div id="rotatePlease">
+    <div class="rotate-icon">🔄</div>
+    <div>ROTATE YOUR DEVICE</div>
+    <div class="rotate-text">This game plays best in landscape</div>
   </div>
 
   <script src="script.js"></script>

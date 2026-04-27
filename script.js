@@ -244,8 +244,8 @@ class Fighter {
     this.y = 0;
     this.vx = 0;
     this.vy = 0;
-    this.width = 104;
-    this.height = 138;
+    this.width = 82;
+    this.height = 112;
     this.facing = side === 'left' ? 1 : -1;
     this.onGround = true;
     this.attackTimer = 0;
@@ -380,8 +380,8 @@ class Fighter {
     const asset = ASSETS[`${this.hero.id}_${frameKey}`];
     const spriteW = 320;
     const spriteH = 426;
-    const drawH = this.height * 1.54;
-    const drawW = this.width * 1.32;
+    const drawH = this.height * 1.38;
+    const drawW = this.width * 1.18;
     const x = this.x - drawW / 2;
     const y = this.y - drawH + 8;
 
@@ -1020,6 +1020,12 @@ howBtn.addEventListener('click', () => {
 });
 
 (async function init() {
+  try {
+    if (screen.orientation && screen.orientation.lock) {
+      screen.orientation.lock('landscape').catch(() => {});
+    }
+  } catch {}
+
   await loadAssets();
   resize();
   
