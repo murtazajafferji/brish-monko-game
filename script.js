@@ -94,8 +94,6 @@ const leftNameEl = document.getElementById('leftName');
 const rightNameEl = document.getElementById('rightName');
 const leftAvatarEl = document.getElementById('leftAvatar');
 const rightAvatarEl = document.getElementById('rightAvatar');
-const touchButtons = [...document.querySelectorAll('.touch-btn')];
-const touchControls = document.querySelector('.touch-controls');
 
 const ASSETS = {};
 const FRAME_KEYS = {
@@ -130,6 +128,8 @@ async function loadAssets() {
   loaded.forEach(([key, img]) => { ASSETS[key] = img; });
 }
 
+// Simplified input: tap left half = go left + jump + attack left
+// tap right half = go right + jump + attack right
 const input = {
   left: false,
   right: false,
@@ -139,77 +139,64 @@ const input = {
   jumpHeld: false,
   leftHeld: false,
   rightHeld: false,
+  tapDir: 0, // -1 left, 1 right, 0 none
 };
 
-function setButtonActive(action, active) {
-  touchButtons.forEach((btn) => {
-    if (btn.dataset.action === action) btn.classList.toggle('active', active);
-  });
+function handleTapStart(x) {
+  if (state.phase !== 'play') return;
+  const half = window.innerWidth / 2;
+  if (x < half) {
+    input.left = true; input.leftHeld = true;
+    input.right = false; input.rightHeld = false;
+    input.tapDir = -1;
+  } else {
+    input.right = true; input.rightHeld = true;
+    input.left = false; input.leftHeld = false;
+    input.tapDir = 1;
+  }
+  input.jumpPressed = true;
+  input.jumpHeld = true;
+  input.attackPressed = true;
+  // Auto-use power when available
+  input.powerPressed = true;
 }
 
-function pressAction(action, active) {
-  if (action === 'left') {
-    input.leftHeld = active;
-    input.left = active;
-    if (active) input.right = false;
-    setButtonActive('left', active);
-  }
-  if (action === 'right') {
-    input.rightHeld = active;
-    input.right = active;
-    if (active) input.left = false;
-    setButtonActive('right', active);
-  }
-  if (action === 'jump') {
-    input.jumpHeld = active;
-    if (active) input.jumpPressed = true;
-    setButtonActive('jump', active);
-  }
-  if (action === 'attack') {
-    if (active) input.attackPressed = true;
-    setButtonActive('attack', active);
-  }
-  if (action === 'power') {
-    if (active) input.powerPressed = true;
-    setButtonActive('power', active);
-  }
+function handleTapEnd() {
+  input.left = false; input.leftHeld = false;
+  input.right = false; input.rightHeld = false;
+  input.jumpHeld = false;
+  input.tapDir = 0;
 }
 
-['pointerdown', 'pointerup', 'pointercancel', 'pointerleave'].forEach((eventName) => {
-  touchButtons.forEach((btn) => {
-    btn.addEventListener(eventName, (event) => {
-      event.preventDefault();
-      const action = btn.dataset.action;
-      const active = eventName === 'pointerdown';
-      pressAction(action, active);
-      if (!active && (action === 'left' || action === 'right')) {
-        input.left = input.leftHeld;
-        input.right = input.rightHeld;
-      }
-      if (!active && action === 'jump') input.jumpHeld = false;
-    });
-  });
+// Touch events on canvas for the simple tap system
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  if (state.phase !== 'play') return;
+  const touch = e.changedTouches[0];
+  handleTapStart(touch.clientX);
+}, { passive: false });
+
+canvas.addEventListener('touchend', (e) => {
+  e.preventDefault();
+  handleTapEnd();
+}, { passive: false });
+
+canvas.addEventListener('touchcancel', (e) => {
+  handleTapEnd();
 });
 
-// Also use touchstart/touchend for lower latency on mobile
-touchButtons.forEach((btn) => {
-  btn.addEventListener('touchstart', (event) => {
-    event.preventDefault();
-    pressAction(btn.dataset.action, true);
-  }, { passive: false });
-  btn.addEventListener('touchend', (event) => {
-    event.preventDefault();
-    const action = btn.dataset.action;
-    pressAction(action, false);
-    if (action === 'left' || action === 'right') { input.left = input.leftHeld; input.right = input.rightHeld; }
-    if (action === 'jump') input.jumpHeld = false;
-  }, { passive: false });
+// Mouse fallback for desktop testing
+canvas.addEventListener('mousedown', (e) => {
+  if (state.phase !== 'play') return;
+  handleTapStart(e.clientX);
 });
+canvas.addEventListener('mouseup', () => handleTapEnd());
 
+// Keyboard still works for desktop
 window.addEventListener('keydown', (event) => {
   const key = event.key.toLowerCase();
-  if (['arrowleft', 'a'].includes(key)) { input.left = true; input.leftHeld = true; }
-  if (['arrowright', 'd'].includes(key)) { input.right = true; input.rightHeld = true; }
+  if (['arrowleft', 'a'].includes(key)) { input.left = true; input.leftHeld = true; input.attackPressed = true; input.jumpPressed = true; input.jumpHeld = true; }
+  if (['arrowright', 'd'].includes(key)) { input.right = true; input.rightHeld = true; input.attackPressed = true; input.jumpPressed = true; input.jumpHeld = true; }
   if (['arrowup', 'w', ' '].includes(key)) {
     if (!input.jumpHeld) input.jumpPressed = true;
     input.jumpHeld = true;
@@ -666,7 +653,7 @@ function cycleWorld() {
 function finishMatch() {
   state.phase = 'gameover';
   menuOverlay.classList.remove('hidden');
-  touchControls?.classList.remove('live');
+  
   let title = 'Draw game';
   let copy = `Final score: ${state.scoreLeft} — ${state.scoreRight}.`;
   if (state.scoreLeft > state.scoreRight) {
@@ -987,7 +974,7 @@ function startMatch() {
   document.querySelector('.lead').textContent = 'A fast, side-view duel: launch the ball into your rival\'s hanging bell before they ring yours. Punch, jump, body-check, and unleash a hero power. It’s short, juicy, and built for phone thumbs.';
   playBtn.textContent = 'Start match';
   menuOverlay.classList.add('hidden');
-  touchControls?.classList.add('live');
+  
   state.phase = 'play';
   state.roundTimer = 45;
   state.scoreLeft = 0;
@@ -998,7 +985,7 @@ function startMatch() {
   ai.setHero(state.heroSelected === 'brish' ? HEROES.monko : HEROES.brish);
   resetPositions(true);
   flashStatus('Timed match. Ring more bells before the clock ends.');
-  tipLine.textContent = 'Left/right to move • Jump to contest • Kick for quick shots • Power for huge sends';
+  tipLine.textContent = 'Tap left side = go left. Tap right side = go right. Auto-jump + auto-kick!';
 }
 
 heroButtons.forEach((btn) => {
@@ -1035,7 +1022,7 @@ howBtn.addEventListener('click', () => {
 (async function init() {
   await loadAssets();
   resize();
-  touchControls?.classList.remove('live');
+  
   player.setHero(HEROES[state.heroSelected]);
   ai.setHero(HEROES.monko);
   resetPositions();

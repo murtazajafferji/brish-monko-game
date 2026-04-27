@@ -283,62 +283,6 @@
       border: 1px solid rgba(255,255,255,0.12);
     }
 
-    .touch-controls {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
-      padding: 0 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      gap: 12px;
-      pointer-events: none;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 180ms ease;
-    }
-
-    .touch-controls.live {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-    }
-
-    .cluster {
-      display: flex;
-      gap: 10px;
-      pointer-events: auto;
-    }
-
-    .cluster.right { align-items: flex-end; }
-    .stack {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .touch-btn {
-      width: 68px;
-      height: 68px;
-      background: rgba(22, 15, 37, 0.72);
-      border: 1px solid rgba(255,255,255,0.14);
-      backdrop-filter: blur(14px);
-      box-shadow: 0 10px 26px rgba(0,0,0,0.24);
-      font-size: 1.5rem;
-      pointer-events: auto;
-    }
-
-    .touch-btn.wide {
-      width: 86px;
-      font-size: 1.15rem;
-      padding: 0 10px;
-    }
-
-    .touch-btn.active {
-      filter: brightness(1.18);
-      border-color: rgba(255,255,255,0.3);
-    }
 
     .tip {
       position: absolute;
@@ -395,8 +339,6 @@
       .meta .label { font-size: 0.66rem; }
       .meta .name { font-size: 0.94rem; }
       .avatar { width: 40px; height: 40px; border-radius: 12px; }
-      .touch-btn { width: 58px; height: 58px; font-size: 1.3rem; }
-      .touch-btn.wide { width: 78px; font-size: 1rem; }
       .tip {
         width: calc(100% - 28px);
         border-radius: 16px;
@@ -462,7 +404,7 @@
           </div>
           <div class="fact">
             <strong>Simple controls</strong>
-            <span>Move, jump, strike, power. Desktop also supports A/D + W + J + K or arrow keys.</span>
+            <span>Tap left side of screen = move left, jump, kick left. Tap right = same but right. That's it.</span>
           </div>
           <div class="fact">
             <strong>Three worlds</strong>
@@ -477,21 +419,8 @@
       </div>
     </div>
 
-    <div class="tip" id="tipLine">Move • Jump • Strike • Power. Hit the bell, not just the wall.</div>
+    <div class="tip" id="tipLine">Tap left side or right side of screen to play</div>
 
-    <div class="touch-controls" aria-hidden="true">
-      <div class="cluster left">
-        <button class="touch-btn" data-action="left">◀</button>
-        <button class="touch-btn" data-action="right">▶</button>
-      </div>
-      <div class="cluster right">
-        <div class="stack">
-          <button class="touch-btn wide" data-action="power">Power</button>
-          <button class="touch-btn wide" data-action="attack">Kick</button>
-        </div>
-        <button class="touch-btn" data-action="jump">⤒</button>
-      </div>
-    </div>
   </div>
 
   <script src="script.js"></script>
